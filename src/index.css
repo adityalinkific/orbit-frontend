@@ -1,5 +1,3 @@
-/* ================= RESET ================= */
-
 * {
   margin: 0;
   box-sizing: border-box;
@@ -16,8 +14,7 @@ a {
   color: inherit;
 }
 
-
-/* ================= LAYOUT ================= */
+/* ---------------- APP LAYOUT ---------------- */
 
 .app-shell,
 .app-wrapper,
@@ -32,6 +29,8 @@ a {
 
 .app-root {
   flex-direction: column;
+  background: linear-gradient(180deg, #eef3fb, #f9fbff);
+  min-height: 100vh;
 }
 
 .app-body {
@@ -44,7 +43,7 @@ a {
 .app-content,
 .page-content {
   flex: 1;
-  background: #f1f5f9;
+  background: #dfdff3;
   overflow: auto;
 }
 
@@ -52,8 +51,7 @@ a {
   padding: 24px;
 }
 
-
-/* ================= NAVBAR ================= */
+/* ---------------- NAVBAR ---------------- */
 
 .navbar {
   height: 54px;
@@ -82,6 +80,17 @@ a {
   align-items: center;
   gap: 4px;
   font-weight: 700;
+}
+
+.logo-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: rgb(1, 1, 1);
+}
+
+.nav-logo img {
+  width: 60px;
+  height: 60px;
 }
 
 .logo-icon {
@@ -130,12 +139,11 @@ a {
   border-radius: 10px;
 }
 
-
-/* ================= SIDEBAR ================= */
+/* ---------------- SIDEBAR ---------------- */
 
 .sidebar {
   width: 230px;
-  background: linear-gradient(180deg, #020617, #0f172a);
+  background: linear-gradient(180deg, #ffffff, #f5f5f5);
   color: white;
   padding: 1rem;
   display: flex;
@@ -154,9 +162,9 @@ a {
 }
 
 .sidebar .collapse-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: #dfdff3;
   border: none;
-  color: white;
+  color: rgb(0, 0, 0);
   padding: 6px 8px;
   border-radius: 8px;
 }
@@ -168,16 +176,16 @@ a {
   padding: 10px 14px;
   border-radius: 10px;
   margin-bottom: 6px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(0, 0, 0, 0.85);
   transition: all .25s ease;
 }
 
 .sidebar nav a:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: #dfdff3;
 }
 
 .sidebar nav a.active {
-  background: rgba(255, 255, 255, 0.22);
+  background: #dfdff3;
 }
 
 .side-icon {
@@ -194,25 +202,7 @@ a {
   display: none;
 }
 
-
-/* ================= CONTENT ================= */
-
-.widget-grid {
-  margin-top: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.widget {
-  background: white;
-  padding: 18px;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
-}
-
-
-/* ================= UTIL ================= */
+/* ---------------- ANIMATIONS ---------------- */
 
 .fade-in {
   animation: fadeIn 0.6s ease forwards;
@@ -223,13 +213,8 @@ a {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0
-  }
-
-  to {
-    opacity: 1
-  }
+  from { opacity: 0 }
+  to { opacity: 1 }
 }
 
 @keyframes slideUp {
@@ -237,7 +222,6 @@ a {
     transform: translateY(25px);
     opacity: 0
   }
-
   to {
     transform: translateY(0);
     opacity: 1
@@ -245,18 +229,104 @@ a {
 }
 
 
-.logo-text {
-  font-size: 24px;
-  font-weight: 700;
-  color: rgb(1, 1, 1);
+/* ---------------- PEOPLE PAGE ---------------- */
+
+.people-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
 }
 
-.nav-logo img {
-  width: 60px;
-  height: 60px;
+.people-card {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.06);
 }
 
-.app-root {
-  background: linear-gradient(180deg, #eef3fb, #f9fbff);
-  min-height: 100vh;
+.people-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.people-table th {
+  text-align: left;
+  padding: 10px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.people-table td {
+  padding: 12px 10px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.people-table tr:hover {
+  background: #f8fafc;
+}
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.row-actions button {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
+  background: #e2e8f0;
+}
+
+.row-actions .danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.primary-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+}
+
+.empty {
+  text-align: center;
+  padding: 18px;
+  color: #64748b;
+}
+
+/* MODAL */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.modal-card {
+  width: 420px;
+}
+
+.people-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.people-form input,
+.people-form select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+.form-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
 }

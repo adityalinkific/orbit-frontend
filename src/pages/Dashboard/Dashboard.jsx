@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { meService, healthService } from "../../services/auth.service";
 import useAuth from "../../hooks/useAuth";
@@ -38,13 +37,31 @@ export default function Dashboard() {
 
   const widgets = widgetsByRole[role] || widgetsByRole.employee;
 
+  const formatRole = (role) => {
+    if (!role) return "Employee";
+    switch (role) {
+      case "super_admin":
+        return "Super Admin";
+      case "admin":
+        return "Admin";
+      case "manager":
+        return "Manager";
+      case "employee":
+        return "Employee";
+      case "intern":
+        return "Intern";
+      default:
+        return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+  };
+
   return (
     <div className="page fade-in">
       <h1>Dashboard</h1>
 
       <p style={{ opacity: 0.7 }}>
         Welcome back, <b>{me?.name || user?.email}</b> — Role:{" "}
-        <b>{role}</b>
+        <b>{formatRole(role)}</b>
       </p>
 
       <div className="widget-grid">
@@ -69,16 +86,16 @@ export default function Dashboard() {
         <div className="widget" style={{ marginTop: "20px" }}>
           <h3>My Profile</h3>
           <p>
-            <b>Name:</b> {me.name || "-"}
+            <b>Name:</b> {user.name || "-"}
           </p>
           <p>
-            <b>Email:</b> {me.email || "-"}
+            <b>Email:</b> {user.email || "-"}
           </p>
           <p>
-            <b>Role:</b> {me.role || "-"}
+            <b>Role:</b> {formatRole(user.role) || "-"}
           </p>
           <p>
-            <b>Department:</b> {me.department || "-"}
+            <b>Department:</b> {user.department || "-"}
           </p>
         </div>
       )}

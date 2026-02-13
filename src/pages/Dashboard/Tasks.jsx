@@ -22,7 +22,7 @@ export default function Tasks() {
         <div className="page">
             <div className="page-header">
                 <div>
-                    <h1>Dashboard</h1>
+                    <h1>Tasks</h1>
                     <p>Overview of your tasks and projects.</p>
                 </div>
 

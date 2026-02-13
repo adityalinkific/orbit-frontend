@@ -27,7 +27,7 @@ export const loginService = async (data) => {
       res.data?.user ||
       res.user || {
         email: data.email,
-        role: res.data?.role || res.role || "user",
+        role: res.data?.role || res.role || "super_admin",
       },
   };
 };
@@ -59,7 +59,7 @@ export const registerService = async (data) => {
       res.data?.user ||
       res.user || {
         email: data.email,
-        role: res.data?.role || res.role || "user",
+        role: res.data?.role || res.role || "super_admin",
       },
     raw: res,
   };
@@ -83,8 +83,9 @@ export const healthService = async () => {
 
 /* ---------------- GET ALL ROLES ---------------- */
 
-export const rolesService = () => {
-  return request("/roles", { method: "GET" });
+export const rolesService = async () => {
+  const res = await request("/roles", { method: "GET" });
+  return res.data || res;
 };
 
 /* ---------------- CREATE ROLE ---------------- */
@@ -100,3 +101,10 @@ export const createRoleService = async (data) => {
   return res.data || res;
 };
 
+
+/* ---------------- GET ALL DEPARTMENTS ---------------- */
+
+export const departmentsService = async () => {
+  const res = await request("/departments", { method: "GET" });
+  return res.data || res;
+};

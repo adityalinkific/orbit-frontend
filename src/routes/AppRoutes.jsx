@@ -6,6 +6,7 @@ import AuthLayout from "../layouts/AuthLayout";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 
+import Dashboard from "../pages/Dashboard/Dashboard";
 import Tasks from "../pages/Dashboard/Tasks";
 import Projects from "../pages/Dashboard/Projects";
 import People from "../pages/Dashboard/People";
@@ -45,6 +46,7 @@ export default function AppRoutes() {
           </Protected>
         }
       >
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard" element={<Tasks />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/people" element={<People />} />

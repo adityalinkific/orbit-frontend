@@ -1,36 +1,45 @@
 import { Link, useLocation } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 
+import {
+  HiOutlineViewGrid,
+  HiOutlineUsers,
+  HiOutlineOfficeBuilding,
+  HiOutlineCog,
+  HiOutlineFolder,
+  HiOutlineChartBar,
+} from "react-icons/hi";
+
 const allMenus = {
   super_admin: [
-    { name: "Dashboard", icon: "📋", path: "/dashboard" },
-    { name: "People", icon: "👥", path: "/people" },
-    { name: "Departments", icon: "🏢", path: "/departments" },
-    { name: "Settings", icon: "⚙️", path: "/settings" },
+    { name: "Dashboard", icon: <HiOutlineViewGrid />, path: "/dashboard" },
+    { name: "People", icon: <HiOutlineUsers />, path: "/people" },
+    { name: "Departments", icon: <HiOutlineOfficeBuilding />, path: "/departments" },
+    { name: "Settings", icon: <HiOutlineCog />, path: "/settings" },
   ],
 
   admin: [
-    { name: "Dashboard", icon: "📋", path: "/dashboard" },
-    { name: "People", icon: "👥", path: "/people" },
-    { name: "Projects", icon: "📁", path: "/projects" },
-    { name: "Departments", icon: "🏢", path: "/departments" },
-    { name: "Analytics", icon: "📊", path: "/analytics" },
-    { name: "Settings", icon: "⚙️", path: "/settings" },
+    { name: "Dashboard", icon: <HiOutlineViewGrid />, path: "/dashboard" },
+    { name: "People", icon: <HiOutlineUsers />, path: "/people" },
+    { name: "Projects", icon: <HiOutlineFolder />, path: "/projects" },
+    { name: "Departments", icon: <HiOutlineOfficeBuilding />, path: "/departments" },
+    { name: "Analytics", icon: <HiOutlineChartBar />, path: "/analytics" },
+    { name: "Settings", icon: <HiOutlineCog />, path: "/settings" },
   ],
 
   manager: [
-    { name: "Dashboard", icon: "📋", path: "/dashboard" },
-    { name: "Projects", icon: "📁", path: "/projects" },
-    { name: "People", icon: "👥", path: "/people" },
+    { name: "Dashboard", icon: <HiOutlineViewGrid />, path: "/dashboard" },
+    { name: "Projects", icon: <HiOutlineFolder />, path: "/projects" },
+    { name: "People", icon: <HiOutlineUsers />, path: "/people" },
   ],
 
   employee: [
-    { name: "Dashboard", icon: "📋", path: "/dashboard" },
-    { name: "Projects", icon: "📁", path: "/projects" },
+    { name: "Dashboard", icon: <HiOutlineViewGrid />, path: "/dashboard" },
+    { name: "Projects", icon: <HiOutlineFolder />, path: "/projects" },
   ],
 
   intern: [
-    { name: "Dashboard", icon: "📋", path: "/dashboard" },
+    { name: "Dashboard", icon: <HiOutlineViewGrid />, path: "/dashboard" },
   ],
 };
 

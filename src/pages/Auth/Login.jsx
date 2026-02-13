@@ -33,12 +33,7 @@ export default function Login() {
 
       login(res, rememberMe);
 
-      // ✅ Role based redirect
-      if (res.user?.role === "super_admin") {
-        navigate("/people", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("LOGIN ERROR 👉", err);
 

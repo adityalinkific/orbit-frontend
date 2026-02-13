@@ -1,7 +1,7 @@
 const API_URL = "http://127.0.0.1:8000/api/v1";
 
 export async function request(endpoint, options = {}) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
   const res = await fetch(API_URL + endpoint, {
     headers: {
