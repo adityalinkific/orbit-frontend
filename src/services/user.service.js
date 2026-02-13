@@ -1,26 +1,25 @@
-import axios from "axios";
+import api from "./api";
 
-const API = "http://127.0.0.1:8000/api/v1";
-
-// GET ALL USERS
+/* ---------------- GET ALL USERS ---------------- */
 export const getAllUsers = async () => {
-  const res = await axios.get(`${API}/users/`);
+  const res = await api.get("/roles/");
   return res.data;
 };
 
-// CREATE USER
+/* ---------------- CREATE USER ---------------- */
 export const createUserService = async (data) => {
-  const res = await axios.post(`${API}/users/`, data);
+  const res = await api.post("/roles/", data);
   return res.data;
 };
 
-// UPDATE USER
+/* ---------------- UPDATE USER ---------------- */
 export const updateUserService = async (id, data) => {
-  const res = await axios.put(`${API}/users/${id}/`, data);
+  const res = await api.put(`/roles/${id}/`, data);
   return res.data;
 };
 
-// DELETE USER
+/* ---------------- DELETE USER ---------------- */
 export const deleteUserService = async (id) => {
-  await axios.delete(`${API}/users/${id}/`);
+  const res = await api.delete(`/roles/${id}/`);
+  return res.data;
 };

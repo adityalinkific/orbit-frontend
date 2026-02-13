@@ -8,13 +8,13 @@ import {
   deleteUserService,
 } from "../../services/user.service";
 
-
 export default function People() {
   const { user } = useAuth();
 
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -28,20 +28,35 @@ export default function People() {
     department: "",
   });
 
+  /* ---------------- FETCH ROLES ---------------- */
+
   const refreshRoles = async () => {
     try {
       const res = await rolesService();
-      if (Array.isArray(res) && res.length > 0) setRoles(res);
-      else if (Array.isArray(res.data) && res.data.length > 0) setRoles(res.data);
-      else {
-        console.warn("Roles API returned empty or invalid data, using fallback.");
-        setRoles([
+      console.log("ROLES RESPONSE 👉", res);
+
+      let data = [];
+      if (Array.isArray(res)) {
+        data = res;
+      } else if (Array.isArray(res?.data)) {
+        data = res.data;
+      } else if (Array.isArray(res?.results)) {
+        data = res.results;
+      } else {
+        console.warn("Unexpected roles format:", res);
+      }
+
+      // Fallback if empty or failed
+      if (data.length === 0) {
+        data = [
           { name: "super_admin", id: "super_admin" },
           { name: "admin", id: "admin" },
           { name: "manager", id: "manager" },
           { name: "employee", id: "employee" },
-        ]);
+        ];
       }
+
+      setRoles(data);
     } catch (err) {
       console.error("Failed to fetch roles:", err);
       setRoles([
@@ -53,52 +68,95 @@ export default function People() {
     }
   };
 
-  useEffect(() => {
-    refreshRoles();
-  }, []);
+  /* ---------------- FETCH USERS ---------------- */
 
-  const createRole = async (e) => {
-    e.preventDefault();
-    await createRoleService(roleForm);
-    setRoleForm({ name: "", description: "" });
-    refreshRoles();
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await getAllUsers();
+
+      // Supports paginated Django response
+      setUsers(Array.isArray(res) ? res : res?.results || []);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    refreshRoles();
+    fetchUsers();
+  }, []);
+
+  /* ---------------- ROLE FILTER ---------------- */
+
+  const getRoleName = (r) => r.name || r.role_name || r.role || r;
+
   const filteredRoles = (roles || []).filter((r) => {
+    const rName = getRoleName(r);
     if (user?.role === "super_admin") return true;
-    if (user?.role === "admin") return r.name !== "super_admin";
+    if (user?.role === "admin") return rName !== "super_admin";
     return true;
   });
 
-  const submit = (e) => {
+  /* ---------------- SUBMIT ---------------- */
+
+  const submit = async (e) => {
     e.preventDefault();
 
-    if (editing) {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === editing.id ? { ...u, ...form } : u))
-      );
-    } else {
-      setUsers((prev) => [...prev, { ...form, id: Date.now() }]);
+    try {
+      if (editing) {
+        await updateUserService(editing.id, form);
+      } else {
+        await createUserService(form);
+      }
+
+      await fetchUsers();
+      closeForm();
+    } catch (err) {
+      console.error("Failed to save user:", err);
     }
-
-    closeForm();
   };
 
-  const remove = (id) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+  /* ---------------- DELETE ---------------- */
+
+  const remove = async (id) => {
+    try {
+      await deleteUserService(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
+
+  /* ---------------- EDIT ---------------- */
 
   const edit = (u) => {
     setEditing(u);
-    setForm(u);
+    setForm({
+      name: u.name,
+      email: u.email,
+      password: "",
+      role: u.role,
+      department: u.department,
+    });
     setOpen(true);
   };
 
   const closeForm = () => {
     setOpen(false);
     setEditing(null);
-    setForm({ name: "", email: "", password: "", role: "", department: "" });
+    setForm({
+      name: "",
+      email: "",
+      password: "",
+      role: "",
+      department: "",
+    });
   };
+
+  /* ---------------- UI ---------------- */
 
   return (
     <div className="page fade-in people-page">
@@ -123,28 +181,37 @@ export default function People() {
             </tr>
           </thead>
           <tbody>
-            {users.length === 0 && (
+            {loading && (
               <tr>
                 <td colSpan="5" className="empty">
-                  No users yet
+                  Loading users...
                 </td>
               </tr>
             )}
 
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.name}</td>
-                <td>{u.email}</td>
-                <td>{u.role}</td>
-                <td>{u.department}</td>
-                <td className="row-actions">
-                  <button onClick={() => edit(u)}>Edit</button>
-                  <button className="danger" onClick={() => remove(u.id)}>
-                    Delete
-                  </button>
+            {!loading && users.length === 0 && (
+              <tr>
+                <td colSpan="5" className="empty">
+                  No users found
                 </td>
               </tr>
-            ))}
+            )}
+
+            {!loading &&
+              users.map((u) => (
+                <tr key={u.id}>
+                  <td>{u.name}</td>
+                  <td>{u.email}</td>
+                  <td>{u.role}</td>
+                  <td>{u.department}</td>
+                  <td className="row-actions">
+                    <button onClick={() => edit(u)}>Edit</button>
+                    <button className="danger" onClick={() => remove(u.id)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
@@ -159,7 +226,9 @@ export default function People() {
               <label>Full Name</label>
               <input
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, name: e.target.value })
+                }
                 required
               />
 
@@ -167,7 +236,9 @@ export default function People() {
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, email: e.target.value })
+                }
                 required
               />
 
@@ -188,14 +259,20 @@ export default function People() {
               <label>Role</label>
               <select
                 value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, role: e.target.value })
+                }
+                required
               >
                 <option value="">Select Role</option>
-                {filteredRoles.map((r) => (
-                  <option key={r.id || r.name} value={r.name}>
-                    {r.name}
-                  </option>
-                ))}
+                {filteredRoles.map((r) => {
+                  const rName = getRoleName(r);
+                  return (
+                    <option key={r.id || rName} value={rName}>
+                      {rName}
+                    </option>
+                  );
+                })}
               </select>
 
               <label>Department</label>
@@ -204,6 +281,7 @@ export default function People() {
                 onChange={(e) =>
                   setForm({ ...form, department: e.target.value })
                 }
+                required
               >
                 <option value="">Select Department</option>
                 <option value="Engineering">Engineering</option>

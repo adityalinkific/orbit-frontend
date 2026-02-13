@@ -1,28 +1,59 @@
-const API_URL = "http://127.0.0.1:8000/api/v1";
+import axios from "axios";
 
-export async function request(endpoint, options = {}) {
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+const API_BASE = "http://127.0.0.1:8000/api/v1";
 
-  const res = await fetch(API_URL + endpoint, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    ...options,
-  });
+const api = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-  const text = await res.text();
-  let data;
+/* ---------------- REQUEST INTERCEPTOR ---------------- */
+api.interceptors.request.use(
+  (config) => {
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token");
 
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/* ---------------- RESPONSE INTERCEPTOR ---------------- */
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Optional global error handling
+    if (error.response?.status === 401) {
+      console.warn("Unauthorized. Token may be invalid.");
+      // You could auto logout here if needed
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export const request = async (url, options = {}) => {
   try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { message: text };
+    const { method = "GET", body, headers = {} } = options;
+    return await api({
+      url,
+      method,
+      data: body,
+      headers,
+    });
+  } catch (error) {
+    if (error.response) {
+      return error.response;
+    }
+    throw error;
   }
+};
 
-  if (!res.ok) {
-    throw new Error(data.message || "API Error");
-  }
-
-  return data;
-}
+export default api;
