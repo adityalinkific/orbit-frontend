@@ -27,8 +27,12 @@ api.interceptors.request.use(
 
 /* ---------------- RESPONSE INTERCEPTOR ---------------- */
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`API Response ${response.config.url}:`, response.data);
+    return response;
+  },
   (error) => {
+    console.error(`API Error ${error.config?.url}:`, error.response?.data || error.message);
     // Optional global error handling
     if (error.response?.status === 401) {
       console.warn("Unauthorized. Token may be invalid.");

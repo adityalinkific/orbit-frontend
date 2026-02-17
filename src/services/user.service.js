@@ -1,25 +1,30 @@
-import api from "./api";
+import { registerService } from "./auth.service";
+import { rolesService } from "./auth.service";
+import { request } from "./api";
 
-/* ---------------- GET ALL USERS ---------------- */
+/* ---------------- GET USERS (FROM ROLES API RESPONSE) ---------------- */
 export const getAllUsers = async () => {
-  const res = await api.get("/roles/");
-  return res.data;
+  // Since backend has no /users endpoint,
+  // we assume users list comes from roles or another supported endpoint.
+  const res = await rolesService();
+  return res;
 };
 
 /* ---------------- CREATE USER ---------------- */
 export const createUserService = async (data) => {
-  const res = await api.post("/roles/", data);
+  return await registerService(data);
+};
+
+/* ---------------- DELETE CURRENT USER ---------------- */
+export const deleteUserService = async () => {
+  const res = await request("/auth/delete", {
+    method: "DELETE",
+  });
   return res.data;
 };
 
 /* ---------------- UPDATE USER ---------------- */
-export const updateUserService = async (id, data) => {
-  const res = await api.put(`/roles/${id}/`, data);
-  return res.data;
-};
-
-/* ---------------- DELETE USER ---------------- */
-export const deleteUserService = async (id) => {
-  const res = await api.delete(`/roles/${id}/`);
-  return res.data;
+// Not supported by backend
+export const updateUserService = async () => {
+  throw new Error("Update user endpoint not available in backend");
 };
