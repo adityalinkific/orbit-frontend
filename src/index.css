@@ -43,7 +43,7 @@ a {
 .app-content,
 .page-content {
   flex: 1;
-  background: #dfdff3;
+  background: linear-gradient(180deg, #eef2ff, #f8fafc);
   overflow: auto;
 }
 
@@ -143,7 +143,7 @@ a {
 
 .sidebar {
   width: 230px;
-  background: linear-gradient(180deg, #ffffff, #f5f5f5);
+  background: linear-gradient(180deg, #ffffff, #ffffff);
   color: white;
   padding: 1rem;
   display: flex;
@@ -162,7 +162,7 @@ a {
 }
 
 .sidebar .collapse-btn {
-  background: #dfdff3;
+  background: linear-gradient(180deg, #eef3fb, #f9fbff);
   border: none;
   color: rgb(0, 0, 0);
   padding: 6px 8px;
@@ -181,11 +181,11 @@ a {
 }
 
 .sidebar nav a:hover {
-  background: #dfdff3;
+  background: linear-gradient(180deg, #eef3fb, #f9fbff);
 }
 
 .sidebar nav a.active {
-  background: #dfdff3;
+  background: linear-gradient(180deg, #eef3fb, #f9fbff);
 }
 
 .side-icon {
@@ -329,4 +329,141 @@ a {
   margin-top: 12px;
   display: flex;
   gap: 10px;
+}
+
+
+/* ---------------- SaaS Form Upgrade ---------------- */
+
+.saas-modal {
+  width: 640px;
+  background: white;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+}
+
+.modal-header h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.modal-header p {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.saas-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.saas-form input,
+.saas-form select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.saas-form input:focus,
+.saas-form select:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.helper-text {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.modern-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.large-btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 14px;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s ease;
+}
+
+.large-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
+}
+
+.text-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.text-btn:hover {
+  color: #0f172a;
+}
+
+
+.people-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #94a3b8;
+  padding: 14px 10px;
+}
+
+.people-table td {
+  padding: 16px 10px;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.people-table tr {
+  transition: background .2s ease;
+}
+
+.people-table tr:hover {
+  background: #f1f5f9;
+}
+
+.view-grid {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.view-grid p {
+  font-size: 14px;
+  color: #334155;
 }

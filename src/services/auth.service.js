@@ -95,7 +95,7 @@ export const healthService = async () => {
 
 /* ---------------- GET ALL ROLES ---------------- */
 export const rolesService = async () => {
-  const res = await request("/roles", {
+  const res = await request("/roles/role", {
     method: "GET",
   });
   return res.data.data;

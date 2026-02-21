@@ -2,19 +2,27 @@ import { useEffect, useState } from "react";
 import useAuth from "../../hooks/useAuth";
 import { rolesService, departmentsService } from "../../services/auth.service";
 import {
-  getAllUsers,
+  getAllUsersService,
   createUserService,
+  updateUserService,
   deleteUserService,
 } from "../../services/user.service";
 
 export default function People() {
   const { user } = useAuth();
 
+  /* ---------------- STATE ---------------- */
+
   const [roles, setRoles] = useState([]);
   const [departments, setDepartments] = useState([]);
+
   const [users, setUsers] = useState([]);
+  const [viewingUser, setViewingUser] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
+
   const [open, setOpen] = useState(false);
 
   const [form, setForm] = useState({
@@ -22,13 +30,14 @@ export default function People() {
     email: "",
     password: "",
     role_id: "",
-    reporting_manager_id: null,
     department_id: "",
+    reporting_manager_id: null,
     is_active: true,
     joined_date: new Date().toISOString().split("T")[0],
   });
 
   /* ---------------- FETCH ROLES ---------------- */
+
   const refreshRoles = async () => {
     try {
       const res = await rolesService();
@@ -39,13 +48,14 @@ export default function People() {
   };
 
   /* ---------------- FETCH USERS ---------------- */
+
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const data = await getAllUsers();
-      setUsers(Array.isArray(data) ? data : []);
+      const res = await getAllUsersService();
+      setUsers(res?.data || []);
     } catch (err) {
-      console.error("Failed to fetch users:", err);
+      console.error("Failed to fetch users", err);
       setUsers([]);
     } finally {
       setLoadingUsers(false);
@@ -53,6 +63,7 @@ export default function People() {
   };
 
   /* ---------------- FETCH DEPARTMENTS ---------------- */
+
   const fetchDepartments = async () => {
     try {
       setLoadingDepartments(true);
@@ -71,49 +82,94 @@ export default function People() {
     fetchDepartments();
   }, []);
 
-  /* ---------------- CREATE USER ---------------- */
-  /* ---------------- CREATE USER ---------------- */
-  const submit = async (e) => {
-    e.preventDefault();
+  /* ---------------- HANDLE EDIT ---------------- */
+
+  const handleEdit = (user) => {
+    setEditingUser(user);
+
+    setForm({
+      name: user.name,
+      email: user.email,
+      password: "",
+      role_id: user.role_id,
+      department_id: user.department_id,
+      reporting_manager_id: user.reporting_manager_id || null,
+      is_active: user.is_active,
+      joined_date: user.joined_date,
+    });
+
+    setOpen(true);
+  };
+
+  /* ---------------- HANDLE DELETE ---------------- */
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this user?"
+    );
+
+    if (!confirmDelete) return;
+
     try {
-      await createUserService({
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role_id: Number(form.role_id),
-        department_id: Number(form.department_id),
-        reporting_manager_id: form.reporting_manager_id,
-        is_active: form.is_active,
-        joined_date: form.joined_date,
-      });
-      await fetchUsers();
-      setOpen(false);
-      setForm({
-        name: "",
-        email: "",
-        password: "",
-        role_id: "",
-        reporting_manager_id: null,
-        department_id: "",
-        is_active: true,
-        joined_date: new Date().toISOString().split("T")[0],
-      });
-      alert("User created successfully");
+      await deleteUserService(id);
+      fetchUsers();
     } catch (err) {
-      console.error("Failed to create user:", err);
-      alert(err.message || "Failed to create user");
+      console.error("Delete failed", err);
     }
   };
 
-  /* ---------------- DELETE CURRENT USER ---------------- */
-  const remove = async () => {
+  /* ---------------- SUBMIT (CREATE + UPDATE) ---------------- */
+
+  const submit = async (e) => {
+    e.preventDefault();
+
     try {
-      await deleteUserService();
-      alert("Current user deleted (backend limitation).");
+      if (editingUser) {
+        await updateUserService(editingUser.id, {
+          name: form.name,
+          email: form.email,
+          role_id: Number(form.role_id),
+          department_id: Number(form.department_id),
+        });
+      } else {
+        await createUserService({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          role_id: Number(form.role_id),
+          department_id: Number(form.department_id),
+          reporting_manager_id: form.reporting_manager_id,
+          is_active: form.is_active,
+          joined_date: form.joined_date,
+        });
+      }
+
+      setOpen(false);
+      setEditingUser(null);
+      fetchUsers();
     } catch (err) {
-      console.error("Delete failed:", err);
+      console.error("Error saving user", err);
     }
   };
+
+  /* ---------------- RESET FORM ---------------- */
+
+  const closeModal = () => {
+    setOpen(false);
+    setEditingUser(null);
+    setForm({
+      name: "",
+      email: "",
+      password: "",
+      role_id: "",
+      department_id: "",
+      reporting_manager_id: null,
+      is_active: true,
+      joined_date: new Date().toISOString().split("T")[0],
+    });
+  };
+
+  /* ---------------- UI ---------------- */
 
   return (
     <div className="page people-page">
@@ -124,6 +180,7 @@ export default function People() {
         </button>
       </div>
 
+      {/* TABLE */}
       <div className="widget people-card">
         <table className="people-table">
           <thead>
@@ -132,16 +189,17 @@ export default function People() {
               <th>Email</th>
               <th>Role</th>
               <th>Status</th>
+              <th width="200">Action</th>
             </tr>
           </thead>
           <tbody>
             {loadingUsers ? (
               <tr>
-                <td colSpan="4">Loading users...</td>
+                <td colSpan="5">Loading users...</td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan="4">No users found</td>
+                <td colSpan="5">No users found</td>
               </tr>
             ) : (
               users.map((user) => (
@@ -150,6 +208,13 @@ export default function People() {
                   <td>{user.email}</td>
                   <td>{user.role?.role || "N/A"}</td>
                   <td>{user.is_active ? "Active" : "Inactive"}</td>
+                  <td>
+                    <button onClick={() => setViewingUser(user)}>View</button>
+                    <button onClick={() => handleEdit(user)}>Edit</button>
+                    <button onClick={() => handleDelete(user.id)}>
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -157,10 +222,12 @@ export default function People() {
         </table>
       </div>
 
+      {/* CREATE / EDIT MODAL */}
       {open && (
         <div className="modal-backdrop">
           <div className="widget modal-card">
-            <h3>Create User</h3>
+            <h3>{editingUser ? "Edit User" : "Create User"}</h3>
+
             <form onSubmit={submit} className="people-form">
               <input
                 placeholder="Full Name"
@@ -181,15 +248,17 @@ export default function People() {
                 required
               />
 
-              <input
-                type="password"
-                placeholder="Password"
-                value={form.password}
-                onChange={(e) =>
-                  setForm({ ...form, password: e.target.value })
-                }
-                required
-              />
+              {!editingUser && (
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
+                  required
+                />
+              )}
 
               <select
                 value={form.role_id}
@@ -199,7 +268,7 @@ export default function People() {
                 required
               >
                 <option value="">Select Role</option>
-                {roles.map((r, i) => (
+                {roles.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.role}
                   </option>
@@ -221,33 +290,42 @@ export default function People() {
                 ))}
               </select>
 
-              <input
-                type="date"
-                value={form.joined_date}
-                onChange={(e) =>
-                  setForm({ ...form, joined_date: e.target.value })
-                }
-                required
-              />
-
-              <label style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
-                <input
-                  type="checkbox"
-                  checked={form.is_active}
-                  onChange={(e) =>
-                    setForm({ ...form, is_active: e.target.checked })
-                  }
-                />
-                Active
-              </label>
-
               <div className="form-actions">
-                <button className="primary-btn">Create</button>
-                <button type="button" onClick={() => setOpen(false)}>
+                <button className="primary-btn">
+                  {editingUser ? "Update" : "Create"}
+                </button>
+                <button type="button" onClick={closeModal}>
                   Cancel
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW USER MODAL */}
+      {viewingUser && (
+        <div className="modal-backdrop">
+          <div className="modal-card saas-modal">
+            <h2>User Details</h2>
+
+            <div className="view-grid">
+              <p><strong>Name:</strong> {viewingUser.name}</p>
+              <p><strong>Email:</strong> {viewingUser.email}</p>
+              <p><strong>Role:</strong> {viewingUser.role?.role}</p>
+              <p><strong>Department:</strong> {viewingUser.department?.department}</p>
+              <p><strong>Status:</strong> {viewingUser.is_active ? "Active" : "Inactive"}</p>
+              <p><strong>Joined:</strong> {new Date(viewingUser.joined_date).toLocaleDateString()}</p>
+            </div>
+
+            <div className="form-actions">
+              <button
+                className="primary-btn"
+                onClick={() => setViewingUser(null)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
