@@ -56,7 +56,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="page fade-in">
+    <div className="page fade-in text-slate-800 p-6">
       <h1>Dashboard</h1>
 
       <p style={{ opacity: 0.7 }}>

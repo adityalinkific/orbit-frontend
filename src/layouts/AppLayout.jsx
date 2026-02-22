@@ -11,14 +11,22 @@ export default function AppLayout() {
   if (!user) return <Navigate to="/" replace />;
 
   return (
-    <div className="app-root">
+    <div className="h-screen flex flex-col">
+      
+      {/* Navbar (fixed height) */}
       <Navbar />
 
-      <div className="app-body">
+      {/* Sidebar + Content */}
+      <div className="flex flex-1 overflow-hidden">
+        
+        {/* Sidebar */}
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-        <main className="page-content">
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto bg-slate-50 ">
           <Outlet />
         </main>
+
       </div>
     </div>
   );

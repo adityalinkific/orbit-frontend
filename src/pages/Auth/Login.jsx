@@ -5,7 +5,6 @@ import { loginService } from "../../services/auth.service";
 import Toast from "../../components/feedback/Toast";
 import Loader from "../../components/common/Loader";
 import "./auth.css";
-import { FiEye, FiEyeOff } from "react-icons/fi";
 import { GiDna1 } from "react-icons/gi";
 import { MdOutlineLink } from "react-icons/md";
 import { FaRocket } from "react-icons/fa";
@@ -93,10 +92,10 @@ export default function Login() {
 
       <div className="orbit-auth-right">
         <div className={`orbit-form slide-up ${shake ? "shake" : ""}`}>
-          <h2>Welcome Back</h2>
+          <h2 className="text-[#4c90ff]">Welcome Back</h2>
           <span>Enter your credentials to access your workspace.</span>
 
-          <form onSubmit={submit}>
+          <form onSubmit={submit} className="text-slate-800">
             <label>Email Address</label>
             <input
               className={errors.email ? "input-error" : ""}

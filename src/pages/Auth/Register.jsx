@@ -42,42 +42,53 @@ export default function Register() {
     setLoading(false);
   };
 
-  return (
-    <div className="orbit-auth fade-in">
-      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
+ return (
+  <div className="orbit-auth fade-in">
+    {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
 
-      <div className="orbit-auth-right">
-        <div className="orbit-form slide-up">
-          <h2>Create Account</h2>
-          <span>Super admin can onboard users.</span>
+    <div className="orbit-auth-right full-center">
+      <div className="orbit-form slide-up">
+        <h2>Create Account</h2>
+        <span>Super admin can onboard users.</span>
 
-          <form onSubmit={submit}>
-            <label>Name</label>
-            <input
-              placeholder="Full name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
+        <form onSubmit={submit}>
+          <label>Name</label>
+          <input
+            required
+            placeholder="Full name"
+            value={form.name}
+            onChange={(e) =>
+              setForm({ ...form, name: e.target.value })
+            }
+          />
 
-            <label>Email</label>
-            <input
-              placeholder="name@company.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
+          <label>Email</label>
+          <input
+            required
+            type="email"
+            placeholder="name@company.com"
+            value={form.email}
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
 
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
+          <label>Password</label>
+          <input
+            required
+            type="password"
+            placeholder="••••••••"
+            value={form.password}
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
+            }
+          />
 
-            {loading ? <Loader /> : <button>Create User</button>}
-          </form>
-        </div>
+          {loading ? <Loader /> : <button>Create User</button>}
+        </form>
       </div>
     </div>
-  );
+  </div>
+);
+
 }

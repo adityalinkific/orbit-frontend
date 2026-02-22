@@ -1,334 +1,191 @@
-import { useEffect, useState } from "react";
-import useAuth from "../../hooks/useAuth";
-import { rolesService, departmentsService } from "../../services/auth.service";
+import { useEffect, useState, useMemo } from "react";
 import {
   getAllUsersService,
-  createUserService,
-  updateUserService,
   deleteUserService,
 } from "../../services/user.service";
+import useAuth from "../../hooks/useAuth";
+import { HiDotsHorizontal } from "react-icons/hi";
+import { FiSearch, FiShield, FiUserPlus } from "react-icons/fi";
 
 export default function People() {
   const { user } = useAuth();
 
-  /* ---------------- STATE ---------------- */
-
-  const [roles, setRoles] = useState([]);
-  const [departments, setDepartments] = useState([]);
-
   const [users, setUsers] = useState([]);
-  const [viewingUser, setViewingUser] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
-
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [loadingDepartments, setLoadingDepartments] = useState(false);
-
-  const [open, setOpen] = useState(false);
-
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role_id: "",
-    department_id: "",
-    reporting_manager_id: null,
-    is_active: true,
-    joined_date: new Date().toISOString().split("T")[0],
-  });
-
-  /* ---------------- FETCH ROLES ---------------- */
-
-  const refreshRoles = async () => {
-    try {
-      const res = await rolesService();
-      setRoles(Array.isArray(res) ? res : []);
-    } catch (err) {
-      console.error("Failed to fetch roles:", err);
-    }
-  };
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   /* ---------------- FETCH USERS ---------------- */
 
   const fetchUsers = async () => {
     try {
-      setLoadingUsers(true);
+      setLoading(true);
       const res = await getAllUsersService();
       setUsers(res?.data || []);
+      console.log(res?.data);
     } catch (err) {
       console.error("Failed to fetch users", err);
       setUsers([]);
     } finally {
-      setLoadingUsers(false);
-    }
-  };
-
-  /* ---------------- FETCH DEPARTMENTS ---------------- */
-
-  const fetchDepartments = async () => {
-    try {
-      setLoadingDepartments(true);
-      const data = await departmentsService();
-      setDepartments(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Failed to fetch departments:", err);
-    } finally {
-      setLoadingDepartments(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    refreshRoles();
     fetchUsers();
-    fetchDepartments();
   }, []);
 
-  /* ---------------- HANDLE EDIT ---------------- */
+  /* ---------------- GROUP BY ROLE ---------------- */
 
-  const handleEdit = (user) => {
-    setEditingUser(user);
-
-    setForm({
-      name: user.name,
-      email: user.email,
-      password: "",
-      role_id: user.role_id,
-      department_id: user.department_id,
-      reporting_manager_id: user.reporting_manager_id || null,
-      is_active: user.is_active,
-      joined_date: user.joined_date,
-    });
-
-    setOpen(true);
-  };
-
-  /* ---------------- HANDLE DELETE ---------------- */
-
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this user?"
+  const groupedUsers = useMemo(() => {
+    const filtered = users.filter((u) =>
+      u.name?.toLowerCase().includes(search.toLowerCase())
     );
 
-    if (!confirmDelete) return;
+    const groups = {};
 
-    try {
-      await deleteUserService(id);
-      fetchUsers();
-    } catch (err) {
-      console.error("Delete failed", err);
-    }
-  };
+    filtered.forEach((u) => {
+      const roleName = u.role?.role?.toUpperCase() || "OTHERS";
 
-  /* ---------------- SUBMIT (CREATE + UPDATE) ---------------- */
+      if (!groups[roleName]) groups[roleName] = [];
 
-  const submit = async (e) => {
-    e.preventDefault();
-
-    try {
-      if (editingUser) {
-        await updateUserService(editingUser.id, {
-          name: form.name,
-          email: form.email,
-          role_id: Number(form.role_id),
-          department_id: Number(form.department_id),
-        });
-      } else {
-        await createUserService({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          role_id: Number(form.role_id),
-          department_id: Number(form.department_id),
-          reporting_manager_id: form.reporting_manager_id,
-          is_active: form.is_active,
-          joined_date: form.joined_date,
-        });
-      }
-
-      setOpen(false);
-      setEditingUser(null);
-      fetchUsers();
-    } catch (err) {
-      console.error("Error saving user", err);
-    }
-  };
-
-  /* ---------------- RESET FORM ---------------- */
-
-  const closeModal = () => {
-    setOpen(false);
-    setEditingUser(null);
-    setForm({
-      name: "",
-      email: "",
-      password: "",
-      role_id: "",
-      department_id: "",
-      reporting_manager_id: null,
-      is_active: true,
-      joined_date: new Date().toISOString().split("T")[0],
+      groups[roleName].push(u);
     });
+
+    return groups;
+  }, [users, search]);
+
+  /* ---------------- DELETE ---------------- */
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this user?")) return;
+    await deleteUserService(id);
+    fetchUsers();
   };
+
+  /* ---------------- HELPERS ---------------- */
+
+  const getInitials = (name) =>
+    name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+
+  const statusColor = (isActive) =>
+    isActive ? "bg-green-500" : "bg-gray-400";
 
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="page people-page">
-      <div className="people-header">
-        <h1>People</h1>
-        <button className="primary-btn" onClick={() => setOpen(true)}>
-          + Create User
-        </button>
-      </div>
+    <div className="bg-slate-100 min-h-screen p-10">
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* HEADER */}
+        <div className="flex justify-between items-start mb-10">
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900">
+              People
+            </h1>
+            <p className="text-slate-500 mt-1 text-sm">
+              Manage team members and permissions
+            </p>
+          </div>
 
-      {/* TABLE */}
-      <div className="widget people-card">
-        <table className="people-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th width="200">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loadingUsers ? (
-              <tr>
-                <td colSpan="5">Loading users...</td>
-              </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan="5">No users found</td>
-              </tr>
-            ) : (
-              users.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>{user.role?.role || "N/A"}</td>
-                  <td>{user.is_active ? "Active" : "Inactive"}</td>
-                  <td>
-                    <button onClick={() => setViewingUser(user)}>View</button>
-                    <button onClick={() => handleEdit(user)}>Edit</button>
-                    <button onClick={() => handleDelete(user.id)}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* CREATE / EDIT MODAL */}
-      {open && (
-        <div className="modal-backdrop">
-          <div className="widget modal-card">
-            <h3>{editingUser ? "Edit User" : "Create User"}</h3>
-
-            <form onSubmit={submit} className="people-form">
+          <div className="flex items-center gap-4">
+            {/* Search */}
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-3 text-slate-400" />
               <input
-                placeholder="Full Name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
-                required
+                type="text"
+                placeholder="Search people..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-72 pl-10 pr-4 py-2 rounded-lg border border-slate-300 text-slate-800 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
+            </div>
 
-              <input
-                type="email"
-                placeholder="Email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
-                required
-              />
+            {/* Invite */}
+            <button className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition">
+              <FiUserPlus size={16} />
+              Invite
+            </button>
+          </div>
+        </div>
 
-              {!editingUser && (
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                  required
-                />
-              )}
+        {/* CONTENT */}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          Object.entries(groupedUsers).map(([roleName, roleUsers]) => (
+            <div key={roleName} className="space-y-4">
+              {/* ROLE TITLE */}
+             <div className="flex items-center gap-2 text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                <FiShield className="w-4 h-4 text-slate-500" />
+                <span>
+                 {roleName} ({roleUsers.length})
+                </span>
+          </div>
 
-              <select
-                value={form.role_id}
-                onChange={(e) =>
-                  setForm({ ...form, role_id: e.target.value })
-                }
-                required
-              >
-                <option value="">Select Role</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.role}
-                  </option>
+
+              {/* CARDS */}
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {roleUsers.map((u) => (
+                  <div
+                    key={u.id}
+                    className="bg-white rounded-xl border border-slate-200 p-6 flex justify-between items-start hover:shadow-sm transition"
+                  >
+                    {/* LEFT SIDE */}
+                    <div className="flex gap-4">
+                      {/* Avatar */}
+                      <div className="relative">
+                        <div className="w-14 h-14 rounded-full bg-slate-500 text-white flex items-center justify-center font-semibold">
+                          {getInitials(u.name)}
+                        </div>
+                        <span
+                          className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${statusColor(
+                            u.is_active
+                          )}`}
+                        ></span>
+                      </div>
+
+                      {/* Info */}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-slate-900">
+                            {u.name}
+                          </h3>
+
+                          <span className="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-600 capitalize">
+                            {u.role?.role}
+                          </span>
+                        </div>
+
+                        <p className="text-slate-500 text-sm mt-1">
+                          {u.email}
+                        </p>
+
+                        <p className="text-slate-400 text-sm mt-1">
+                          {u.department?.department || "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* ACTION MENU */}
+                    <div className="relative group">
+                      <button className="text-slate-400 hover:text-slate-600">
+                        <HiDotsHorizontal size={20} />
+                      </button>
+
+
+                    </div>
+                  </div>
                 ))}
-              </select>
-
-              <select
-                value={form.department_id}
-                onChange={(e) =>
-                  setForm({ ...form, department_id: e.target.value })
-                }
-                required
-              >
-                <option value="">Select Department</option>
-                {departments.map((dept) => (
-                  <option key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </option>
-                ))}
-              </select>
-
-              <div className="form-actions">
-                <button className="primary-btn">
-                  {editingUser ? "Update" : "Create"}
-                </button>
-                <button type="button" onClick={closeModal}>
-                  Cancel
-                </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* VIEW USER MODAL */}
-      {viewingUser && (
-        <div className="modal-backdrop">
-          <div className="modal-card saas-modal">
-            <h2>User Details</h2>
-
-            <div className="view-grid">
-              <p><strong>Name:</strong> {viewingUser.name}</p>
-              <p><strong>Email:</strong> {viewingUser.email}</p>
-              <p><strong>Role:</strong> {viewingUser.role?.role}</p>
-              <p><strong>Department:</strong> {viewingUser.department?.department}</p>
-              <p><strong>Status:</strong> {viewingUser.is_active ? "Active" : "Inactive"}</p>
-              <p><strong>Joined:</strong> {new Date(viewingUser.joined_date).toLocaleDateString()}</p>
             </div>
-
-            <div className="form-actions">
-              <button
-                className="primary-btn"
-                onClick={() => setViewingUser(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }
