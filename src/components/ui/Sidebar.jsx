@@ -14,8 +14,8 @@ import { VscRobot } from "react-icons/vsc";
 import { MdOutlineTaskAlt } from "react-icons/md";
 
 const allMenus = {
-  super_admin: [
-    { name: "Tasks", icon: <MdOutlineTaskAlt size={20} />, path: "/dashboard" },
+  all_menu: [
+    { name: "Task", icon: <MdOutlineTaskAlt size={20} />, path: "/dashboard" },
     { name: "Projects", icon: <HiOutlineFolder size={20} />, path: "/projects" },
     { name: "People", icon: <HiOutlineUsers size={20} />, path: "/people" },
     { name: "Departments", icon: <HiOutlineOfficeBuilding size={20} />, path: "/departments" },
@@ -26,13 +26,22 @@ const allMenus = {
     { name: "Settings", icon: <HiOutlineCog size={20} />, path: "/settings" },
   ],
 };
+const superAdminMenu = {
+  super_admin: [
+    { name: "Dashboard", icon: <MdOutlineTaskAlt size={20} />, path: "/dashboard" },
+    { name: "People", icon: <HiOutlineUsers size={20} />, path: "/people" },
+    { name: "System Audit", icon: <FiShield  size={20} />, path: "/audit" },
+    { name: "Settings", icon: <HiOutlineCog size={20} />, path: "/settings" },
+  ],
+};
+
 
 export default function Sidebar({ collapsed, setCollapsed }) {
   const location = useLocation();
   const { user } = useAuth();
 
   const role = user?.role || "super_admin";
-  const menuItems = allMenus[role] || allMenus.super_admin;
+  const menuItems = allMenus[role] || superAdminMenu[role];
 
   return (
     <aside
