@@ -99,7 +99,7 @@ export default function Login() {
             <label>Email Address</label>
             <input
               className={errors.email ? "input-error" : ""}
-              placeholder="name@company.com"
+              placeholder="Enter your email"
               value={form.email}
               onChange={(e) => {
                 setForm({ ...form, email: e.target.value });
