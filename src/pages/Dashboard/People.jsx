@@ -239,9 +239,9 @@ const sortedGroupedUsers = Object.entries(groupedUsers).sort(
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-  const payload = {
+  const basePayload = {
     name: form.name,
-    password: form.password,
+    email: form.email, // ✅ FIXED
     role_id: Number(form.role_id),
     department_id: Number(form.department_id),
     reporting_manager_id: form.reporting_manager_id
@@ -253,9 +253,19 @@ const handleSubmit = async (e) => {
 
   try {
     if (editingUser) {
-      await updateUserService(editingUser.id, payload);
+      // 🔹 On edit, only send password if user typed one
+      const updatePayload = {
+        ...basePayload,
+        ...(form.password ? { password: form.password } : {}),
+      };
+
+      await updateUserService(editingUser.id, updatePayload);
     } else {
-      await createUserService(payload);
+      // 🔹 On create, password is required
+      await createUserService({
+        ...basePayload,
+        password: form.password,
+      });
     }
 
     closeModal();
@@ -264,6 +274,7 @@ const handleSubmit = async (e) => {
     console.error("Error saving user", err);
   }
 };
+
 
 
 

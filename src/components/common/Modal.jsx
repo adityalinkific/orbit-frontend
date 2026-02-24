@@ -1,8 +1,12 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Select from "@radix-ui/react-select";
-import { ChevronDownIcon, CheckIcon,   EyeOpenIcon, EyeClosedIcon  } from "@radix-ui/react-icons";
+import {
+  ChevronDownIcon,
+  CheckIcon,
+  EyeOpenIcon,
+  EyeClosedIcon,
+} from "@radix-ui/react-icons";
 import { useState } from "react";
-
 
 export default function Modal({
   open,
@@ -14,26 +18,20 @@ export default function Modal({
   departments,
   onSubmit,
 }) {
-
-    const [showPassword, setShowPassword] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        {/* Overlay */}
         <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
 
-        {/* Modal Content */}
         <Dialog.Content className="fixed text-slate-900 left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-8 shadow-2xl focus:outline-none">
-
-          {/* Header */}
           <div className="mb-6">
-            <Dialog.Title className="text-2xl font-semibold text-slate-900">
+            <Dialog.Title className="text-2xl font-semibold">
               {editingUser ? "Edit User" : "Create User"}
             </Dialog.Title>
             <p className="text-sm text-slate-500 mt-1">
-              Add a new team member and assign role & department
+              Add a team member and assign role & department
             </p>
           </div>
 
@@ -47,12 +45,11 @@ export default function Modal({
                 </label>
                 <input
                   required
-                  placeholder="e.g. Michael Brown"
                   value={form.name}
                   onChange={(e) =>
                     setForm({ ...form, name: e.target.value })
                   }
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
                 />
               </div>
 
@@ -63,58 +60,51 @@ export default function Modal({
                 <input
                   required
                   type="email"
-                  placeholder="michael@company.com"
                   value={form.email}
                   onChange={(e) =>
                     setForm({ ...form, email: e.target.value })
                   }
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
                 />
               </div>
             </div>
 
-{/* Password */}
-
+            {/* Password */}
             <div>
-            <label className="text-sm font-medium text-slate-700">
-            {editingUser ? "Password (Required for Update)" : "Password"}
-            </label>
+              <label className="text-sm font-medium text-slate-700">
+                {editingUser
+                  ? "Password (Leave empty to keep unchanged)"
+                  : "Password"}
+              </label>
 
+              <div className="relative mt-2">
+                <input
+                  required={!editingUser}
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 pr-12 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                />
 
-                <div className="relative mt-2">
-               <input
-  required={!editingUser}
-  type={showPassword ? "text" : "password"}
-  placeholder="Minimum 8 characters"
-  value={form.password}
-  onChange={(e) =>
-    setForm({ ...form, password: e.target.value })
-  }
-  className="w-full rounded-xl border border-slate-200 px-4 py-3 pr-12 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
-/>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeClosedIcon /> : <EyeOpenIcon />}
+                </button>
+              </div>
 
-
-
-
-      {/* Toggle Button */}
-      <button
-        type="button"
-        onClick={() => setShowPassword((prev) => !prev)}
-        className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600 transition"
-      >
-        {showPassword ? <EyeClosedIcon /> : <EyeOpenIcon />}
-      </button>
-    </div>
-
-    <p className="text-xs text-slate-400 mt-1">
-      Must be at least 8 characters long.
-    </p>
-  </div>
-
-
+              <p className="text-xs text-slate-400 mt-1">
+                Must be at least 8 characters.
+              </p>
+            </div>
 
             {/* Role + Department */}
-            <div className="text-slate-900 grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6">
+
               {/* ROLE */}
               <div>
                 <label className="text-sm font-medium text-slate-700">
@@ -122,12 +112,12 @@ export default function Modal({
                 </label>
 
                 <Select.Root
-                  value={form.role_id}
+                  value={form.role_id || undefined}
                   onValueChange={(value) =>
                     setForm({ ...form, role_id: value })
                   }
                 >
-                  <Select.Trigger className="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600 shadow-sm focus:ring-2 focus:ring-blue-100">
+                  <Select.Trigger className="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:ring-2 focus:ring-blue-100">
                     <Select.Value placeholder="Select Role" />
                     <Select.Icon>
                       <ChevronDownIcon />
@@ -135,13 +125,13 @@ export default function Modal({
                   </Select.Trigger>
 
                   <Select.Portal>
-                    <Select.Content className="z-50 mt-2 w-[var(--radix-select-trigger-width)] rounded-xl border bg-white shadow-xl">
+                    <Select.Content className="z-50 mt-2 text-slate-900 rounded-xl border bg-white shadow-xl">
                       <Select.Viewport className="p-2">
                         {roles.map((r) => (
                           <Select.Item
                             key={r.id}
                             value={String(r.id)}
-                            className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 focus:bg-slate-100 outline-none"
+                            className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-slate-100 outline-none"
                           >
                             <Select.ItemText>{r.role}</Select.ItemText>
                             <Select.ItemIndicator>
@@ -162,12 +152,12 @@ export default function Modal({
                 </label>
 
                 <Select.Root
-                  value={form.department_id}
+                  value={form.department_id || undefined}
                   onValueChange={(value) =>
                     setForm({ ...form, department_id: value })
                   }
                 >
-                  <Select.Trigger className="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600 shadow-sm focus:ring-2 focus:ring-blue-100">
+                  <Select.Trigger className="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:ring-2 focus:ring-blue-100">
                     <Select.Value placeholder="Select Department" />
                     <Select.Icon>
                       <ChevronDownIcon />
@@ -175,13 +165,13 @@ export default function Modal({
                   </Select.Trigger>
 
                   <Select.Portal>
-                    <Select.Content className="z-50 mt-2 w-[var(--radix-select-trigger-width)] rounded-xl border bg-white shadow-xl">
+                    <Select.Content className="z-50 mt-2 text-slate-900 rounded-xl border bg-white shadow-xl">
                       <Select.Viewport className="p-2">
                         {departments.map((d) => (
                           <Select.Item
                             key={d.id}
                             value={String(d.id)}
-                            className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 focus:bg-slate-100 outline-none"
+                            className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-slate-100 outline-none"
                           >
                             <Select.ItemText>
                               {d.department || d.name}
@@ -202,7 +192,8 @@ export default function Modal({
             <div className="flex items-center gap-4 pt-4">
               <button
                 type="submit"
-                className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-medium text-white shadow-lg hover:bg-blue-700 transition"
+                disabled={!form.role_id || !form.department_id}
+                className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {editingUser ? "Update User" : "Create User"}
               </button>
@@ -216,6 +207,7 @@ export default function Modal({
                 </button>
               </Dialog.Close>
             </div>
+
           </form>
         </Dialog.Content>
       </Dialog.Portal>
