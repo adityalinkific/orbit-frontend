@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { FaBuilding, FaPlus } from "react-icons/fa6";
-import { FiUsers } from "react-icons/fi";
+import { useEffect, useState } from "react"
+import { FaPlus } from "react-icons/fa6"
 
 import {
   getDepartments,
@@ -8,229 +7,211 @@ import {
   updateDepartment,
   deleteDepartment,
   getDepartmentById,
-} from "../../services/department.service";
+} from "../../services/department.service"
+
+import DepartmentModal from "../../components/common/DepartmentModal"
+import DepartmentCard from "../../components/common/DepartmentCard"
+import DepartmentListView from "../../components/common/DepartmentListView"
+import DepartmentsToolbar from "../../components/common/DepartmentsToolbar"
 
 const Departments = () => {
-  const [departments, setDepartments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [departments, setDepartments] = useState([])
+  const [showModal, setShowModal] = useState(false)
+  const [editingDept, setEditingDept] = useState(null)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingDept, setEditingDept] = useState(null);
+  const [search, setSearch] = useState("")
+  const [status, setStatus] = useState("all")
+  const [sortBy, setSortBy] = useState("name")
+  const [view, setView] = useState("grid")
 
   const [form, setForm] = useState({
     name: "",
     description: "",
-  });
+    is_active: true,
+  })
+  useEffect(() => {
+  console.log("Departments loaded:", departments.length)
+}, [departments])
 
   useEffect(() => {
-    fetchDepartments();
-  }, []);
+    fetchDepartments()
+  }, [])
 
-  const fetchDepartments = async () => {
-    try {
-      const response = await getDepartments();
-      setDepartments(response.data || []);
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchDepartments = async () => {
+  try {
+    const res = await getDepartments()
+    console.log("📥 API Response:", res)
+    setDepartments(Array.isArray(res.data) ? res.data : [])
+  } catch (error) {
+    console.error("Failed to fetch departments:", error)
+    setDepartments([])
+  }
+}
 
-  /* ================= CREATE / UPDATE ================= */
 
-  const [errorMessage, setErrorMessage] = useState("");
+  const filteredDepartments = departments
+    .filter((d) =>
+      d.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter((d) =>
+      status === "all" ? true : status === "active" ? d.is_active : !d.is_active
+    )
+    .sort((a, b) => {
+      if (sortBy === "name") return a.name.localeCompare(b.name)
+      if (sortBy === "members")
+        return (b.member_count || 0) - (a.member_count || 0)
+      if (sortBy === "created")
+        return new Date(b.created_at) - new Date(a.created_at)
+      return 0
+    })
 
 const handleSubmit = async (e) => {
-  e.preventDefault();
-  setErrorMessage("");
+  e.preventDefault()
+  
+  if (isSubmitting) return
+  
+  const trimmedName = form.name.trim()
+  if (!trimmedName) {
+    setErrorMessage("Department name is required")
+    return
+  }
+
+  setIsSubmitting(true)
+  setErrorMessage("")
 
   try {
     if (editingDept) {
-      await updateDepartment(editingDept.id, {
-        name: form.name,
-        description: form.description,
-      });
+      await updateDepartment(editingDept.id, form)
     } else {
-      await createDepartment({
-        name: form.name,
-        description: form.description,
-      });
+      // 🔥 SEND TO API ANYWAY - LET SERVER DECIDE
+      const apiData = { 
+        name: trimmedName, 
+        description: form.description?.trim() || "" 
+      }
+      
+      console.log("🔥 SENDING ANYWAY:", apiData)
+      const response = await createDepartment(apiData)
+      
+      // If we get here, it SUCCEEDED
+      console.log("✅ CREATED:", response.data)
     }
 
-    closeModal();
-    fetchDepartments();
+    // Success!
+    setShowModal(false)
+    setEditingDept(null)
+    setForm({ name: "", description: "", is_active: true })
+    await fetchDepartments()
+    
   } catch (error) {
+    console.error("💥 CAUGHT:", error.response?.data)
+    
+    // SERVER KNOWS BEST - TRUST IT
     if (error.response?.status === 409) {
-      setErrorMessage(
-        error.response?.data?.message || "Department already exists."
-      );
+      setErrorMessage(`"${trimmedName}" already exists`)
+    } else if (error.response?.status === 422) {
+      setErrorMessage("Invalid data format")
     } else {
-      setErrorMessage("Something went wrong. Please try again.");
+      setErrorMessage("Network error - try again")
     }
+  } finally {
+    setIsSubmitting(false)
   }
-};
+}
 
-  /* ================= DELETE ================= */
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this department?"
-    );
-    if (!confirmDelete) return;
 
-    try {
-      await deleteDepartment(id);
-      fetchDepartments();
-    } catch (error) {
-      console.error("Error deleting department:", error);
-    }
-  };
 
-  /* ================= EDIT ================= */
+
+
 
   const handleEdit = async (id) => {
-    try {
-      const response = await getDepartmentById(id);
-      const dept = response.data;
+    const res = await getDepartmentById(id)
+    setEditingDept(res.data)
+    setForm(res.data)
+    setShowModal(true)
+  }
 
-      setEditingDept(dept);
-      setForm({
-        name: dept.name,
-        description: dept.description,
-      });
-
-      setShowModal(true);
-    } catch (error) {
-      console.error("Error fetching department:", error);
-    }
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingDept(null);
-    setForm({ name: "", description: "" });
-  };
+  const handleDelete = async (id) => {
+    if (!confirm("Delete department?")) return
+    await deleteDepartment(id)
+    fetchDepartments()
+  }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="mb-8 flex item-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-gray-800">
-            Departments
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Organizational structure and team ownership
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900 mb-1">Departments</h1>
+          <p className="text-gray-500 text-sm">Organizational structure and team ownership</p>
         </div>
+          <div>
+            <button
+              onClick={async () => {
+                await fetchDepartments() 
+                setEditingDept(null)
+                setForm({ name: "", description: "", is_active: true })
+                setErrorMessage("")
+                setShowModal(true)
+              }}
+              className="flex items-center gap-2 rounded-md bg-[#005eff] px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              <FaPlus className="text-xs" />
+              Add Department
+            </button>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-md shadow hover:bg-slate-700 transition"
-        >
-          <FaPlus size={18} />
-          Add Department
-        </button>
+
+          </div>
       </div>
 
-      {/* Grid */}
-      {loading ? (
-        <p>Loading departments...</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {departments.map((dept) => (
-            <div
-              key={dept.id}
-              className="bg-white rounded-xl shadow-sm border p-6"
-            >
-              <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 mb-4">
-                <FaBuilding size={22} />
-              </div>
+      <DepartmentsToolbar
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        view={view}
+        setView={setView}
+      />
 
-              <h3 className="text-lg font-semibold text-gray-800">
-                {dept.name}
-              </h3>
-
-              <p className="text-gray-500 text-sm mt-2">
-                {dept.description || "No description available"}
-              </p>
-
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => handleEdit(dept.id)}
-                  className="text-sm text-blue-600"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => handleDelete(dept.id)}
-                  className="text-sm text-red-500"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+      {view === "grid" ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {filteredDepartments.map((d) => (
+            <DepartmentCard
+              key={d.id}
+              department={d}
+              onEdit={() => handleEdit(d.id)}
+              onDelete={() => handleDelete(d.id)}
+            />
           ))}
         </div>
+      ) : (
+        <DepartmentListView
+          departments={filteredDepartments}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       )}
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white w-full max-w-md p-6 rounded-xl">
-            <h2 className="text-lg font-semibold mb-4">
-              {errorMessage && (
-  <div className="bg-red-100 text-red-600 px-3 py-2 rounded text-sm">
-    {errorMessage}
-  </div>
-)}
-              {editingDept ? "Edit Department" : "Create Department"}
-            </h2>
+      <DepartmentModal
+        open={showModal}
+        onOpenChange={setShowModal}
+        mode={editingDept ? "edit" : "create"}
+        form={form}
+        setForm={setForm}
+        onSubmit={handleSubmit}
+        errorMessage={errorMessage}
+        setErrorMessage={setErrorMessage}
+        departments={departments}
+        isSubmitting={isSubmitting} 
+        disabled={!form.name.trim() || errorMessage.includes("exists")}
+      />
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                required
-                placeholder="Department Name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
-                className="w-full border px-3 py-2 rounded"
-              />
 
-              <textarea
-                placeholder="Description"
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                className="w-full border px-3 py-2 rounded"
-              />
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="text-sm text-gray-500"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  {editingDept ? "Update" : "Create"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
-  );
-};
+  )
+}
 
-export default Departments;
+export default Departments

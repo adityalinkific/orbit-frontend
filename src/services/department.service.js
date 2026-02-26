@@ -8,9 +8,18 @@ export const getDepartments = async () => {
 
 /* ---------------- CREATE DEPARTMENT ---------------- */
 export const createDepartment = async (data) => {
-  const response = await API.post("/departments/", data);
-  return response.data;
+  try {
+    const response = await API.post("/departments/", data);
+    return response;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      console.error("🛑 SERVER DUPLICATE DETECTED:", error.response.data);
+      throw error; // Let handleSubmit catch it
+    }
+    throw error;
+  }
 };
+
 
 /* ---------------- GET SINGLE DEPARTMENT ---------------- */
 export const getDepartmentById = async (id) => {
