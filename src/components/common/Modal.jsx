@@ -46,7 +46,7 @@ export default function Modal({
                 <input
                   required
                   value={form.name}
-                  placeholder="e.g. Michael Brown"
+                  placeholder="Enter full name"
                   onChange={(e) =>
                     setForm({ ...form, name: e.target.value })
                   }
@@ -62,7 +62,7 @@ export default function Modal({
                   required
                   type="email"
                   value={form.email}
-                  placeholder="michael@company.com"
+                  placeholder="Enter email address"
                   onChange={(e) =>
                     setForm({ ...form, email: e.target.value })
                   }
@@ -84,6 +84,7 @@ export default function Modal({
                   required={!editingUser}
                   type={showPassword ? "text" : "password"}
                   value={form.password}
+                  placeholder="••••••••"
                   onChange={(e) =>
                     setForm({ ...form, password: e.target.value })
                   }
