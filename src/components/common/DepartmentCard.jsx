@@ -1,14 +1,16 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { MoreVertical, Users, Pencil, Trash2, Building2 } from "lucide-react"
 
-const DepartmentCard = ({ department, onEdit, onDelete }) => {
+const DepartmentCard = ({ department, onEdit, onDelete, onClick }) => {
   return (
-    <div className="group relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="group relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md  cursor-pointer"
+    onClick={() => onClick?.(department)}
+    >
 
       {/* Top row */}
       <div className="flex items-start justify-between">
         {/* Icon */}
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
           <Building2 />
         </div>
 
@@ -83,7 +85,7 @@ const DepartmentCard = ({ department, onEdit, onDelete }) => {
               JM
             </div>
             <span>
-              Led by <span className="font-medium text-gray-800">Jamne Myres</span>
+              Led by <span className="font-medium text-gray-800">James Myres</span>
             </span>
           </div>
 

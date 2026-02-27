@@ -1,7 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { MoreHorizontal } from "lucide-react"
 
-const DepartmentListView = ({ departments, onEdit, onDelete }) => {
+const DepartmentListView = ({ departments, onEdit, onDelete, onDepartmentClick }) => {
   return (
     <div className="overflow-hidden rounded-xl text-slate-900 border border-gray-200 bg-white">
       <table className="w-full text-sm">
@@ -10,8 +10,8 @@ const DepartmentListView = ({ departments, onEdit, onDelete }) => {
           <tr>
             <th className="px-6 py-4 text-left font-medium">Department</th>
             <th className="px-6 py-4 text-left font-medium">Description</th>
-            <th className="px-6 py-4 text-left font-medium">Members</th>
-            <th className="px-6 py-4 text-left font-medium">Status</th>
+            <th className="px-6 py-4 text-center font-medium">Members</th>
+            <th className="px-6 py-4 text-center font-medium">Status</th>
             <th className="px-6 py-4 text-left font-medium">Created</th>
             <th className="px-6 py-4 text-right font-medium">Actions</th>
           </tr>
@@ -20,9 +20,12 @@ const DepartmentListView = ({ departments, onEdit, onDelete }) => {
         {/* Body */}
         <tbody className="divide-y divide-[#e0e0e0]">
           {departments.map((dept) => (
-            <tr key={dept.id} className="hover:bg-gray-50">
+            <tr key={dept.id} className="hover:bg-gray-50 cursor-pointer"
+            onClick={() => onDepartmentClick?.(dept)}
+            >
               {/* Department */}
-              <td className="px-6 py-4">
+              <td className="px-6 py-4"
+              >
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
                     {dept.name?.[0]}
@@ -37,12 +40,12 @@ const DepartmentListView = ({ departments, onEdit, onDelete }) => {
               </td>
 
               {/* Members */}
-              <td className="px-6 py-4 font-medium">
+              <td className="px-6 py-4 font-medium text-center">
                 {dept.member_count ?? 0}
               </td>
 
               {/* Status */}
-              <td className="px-6 py-4">
+              <td className="px-6 py-4 text-center">
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
                     dept.is_active
