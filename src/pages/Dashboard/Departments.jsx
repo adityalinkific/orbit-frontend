@@ -15,6 +15,8 @@ import DepartmentCard from "../../components/common/DepartmentCard"
 import DepartmentListView from "../../components/common/DepartmentListView"
 import DepartmentsToolbar from "../../components/common/DepartmentsToolbar"
 import DepartmentSidebar from "../../components/common/DepartmentSidebar"
+import DepartmentCardSkeleton from "../../components/department/DepartmentCardSkeleton"
+import DepartmentTableSkeleton from "../../components/department/DepartmentTableSkeleton"
 
 const Departments = () => {
   const [users, setUsers] = useState([])
@@ -23,6 +25,7 @@ const Departments = () => {
   const [editingDept, setEditingDept] = useState(null)
   const [errorMessage, setErrorMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loadingDepartments, setLoadingDepartments] = useState(true)
 
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -45,14 +48,23 @@ const Departments = () => {
     fetchUsers()
   }, [])
 
-  const fetchDepartments = async () => {
-    try {
-      const data = await getDepartments()
-      setDepartments(data)
-    } catch (err) {
-      console.error("Failed to fetch departments", err)
-    }
+  
+
+const fetchDepartments = async () => {
+  try {
+    setLoadingDepartments(true)
+    const data = await getDepartments()
+    setDepartments(data)
+  } catch (err) {
+    console.error(err)
+  } finally {
+    setLoadingDepartments(false)
   }
+}
+
+
+
+
 
   const fetchUsers = async () => {
     try {
@@ -79,27 +91,27 @@ const handleSubmit = async (e) => {
   const payload = {
     name: form.name.trim(),
     description: form.description?.trim() || "",
-    department_head_id:
-      typeof form.department_head_id === "number"
-        ? form.department_head_id
-        : null,
+    department_head_id: typeof form.department_head_id === "number"
+      ? form.department_head_id
+      : null,
+    is_active: form.is_active, 
   }
 
   try {
     if (editingDept) {
-      await updateDepartment(editingDept.id, payload)
+      await updateDepartment(editingDept.id, payload) 
     } else {
       await createDepartment(payload)
     }
 
-    await fetchDepartments() // ensures fresh backend data
+    await fetchDepartments() 
     setShowModal(false)
     setEditingDept(null)
     setForm({
       name: "",
       description: "",
       department_head_id: null,
-      is_active: true,
+      is_active: true, 
     })
   } catch (err) {
     console.error(err)
@@ -108,6 +120,7 @@ const handleSubmit = async (e) => {
     setIsSubmitting(false)
   }
 }
+
 
 
   /* ---------------- DELETE ---------------- */
@@ -129,19 +142,20 @@ const handleSubmit = async (e) => {
   }
 
   /* ---------------- EDIT ---------------- */
-  const handleEdit = (id) => {
-    const dept = departments.find((d) => d.id === id)
-    if (!dept) return
+const handleEdit = (id) => {
+  const dept = departments.find((d) => d.id === id)
+  if (!dept) return
 
-    setEditingDept(dept)
-    setForm({
-      name: dept.name,
-      description: dept.description || "",
-      department_head_id: dept.department_head_id ?? null,
-      is_active: dept.is_active,
-    })
-    setShowModal(true)
-  }
+  setEditingDept(dept)
+  setForm({
+    name: dept.name,
+    description: dept.description || "",
+    department_head_id: dept.department_head_id ?? null,
+    is_active: dept.is_active ?? true, 
+  })
+  setShowModal(true)
+}
+
 
   /* ---------------- SIDEBAR ---------------- */
   const handleDepartmentClick = (dept) => {
@@ -155,17 +169,27 @@ const handleSubmit = async (e) => {
   }
 
   /* ---------------- FILTER ---------------- */
-  const filteredDepartments = departments
-    .filter((d) =>
-      d.name.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter((d) =>
-      status === "all" ? true : status === "active" ? d.is_active : !d.is_active
-    )
-    .sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name)
-      return 0
-    })
+const filteredDepartments = departments
+  .filter((d) =>
+    d.name.toLowerCase().includes(search.toLowerCase())
+  )
+  .filter((d) =>
+    status === "all" ? true : status === "active" ? d.is_active : !d.is_active
+  )
+  .sort((a, b) => {
+    if (sortBy === "name") return a.name.localeCompare(b.name)
+    
+    if (sortBy === "members") return b.total_members - a.total_members
+    
+    if (sortBy === "created")
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    
+    return 0
+  })
+
+
+
+
 
   return (
     <>
@@ -194,7 +218,7 @@ const handleSubmit = async (e) => {
               })
               setShowModal(true)
             }}
-            className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white"
+            className="flex items-center text-[14px] font-medium gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-white"
           >
             <FaPlus /> Add Department
           </button>
@@ -213,7 +237,17 @@ const handleSubmit = async (e) => {
           setView={setView}
         />
 
-        {view === "grid" ? (
+        {loadingDepartments ? (
+  view === "grid" ? (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {[...Array(8)].map((_, i) => (
+        <DepartmentCardSkeleton key={i} />
+      ))}
+    </div>
+  ) : (
+    <DepartmentTableSkeleton />
+  )
+) :view === "grid" ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {filteredDepartments.map((d) => (
               <DepartmentCard
@@ -231,6 +265,8 @@ const handleSubmit = async (e) => {
             onDepartmentClick={handleDepartmentClick}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            sortBy={sortBy}           
+            onSortChange={setSortBy} 
           />
         )}
 

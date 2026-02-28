@@ -28,7 +28,7 @@ const DepartmentCard = ({ department, onEdit, onDelete, onClick }) => {
 
           <DropdownMenu.Content
             align="end"
-            className="z-50 w-36 rounded-lg border bg-white p-1 shadow-md"
+            className="z-50 w-36 rounded-lg  bg-white p-1 shadow-md"
             onClick={(e) => e.stopPropagation()}   
           >
             <DropdownMenu.Item
@@ -59,7 +59,7 @@ const DepartmentCard = ({ department, onEdit, onDelete, onClick }) => {
       </div>
 
       {/* Title */}
-      <h3 className="mt-5 text-lg font-semibold text-gray-900">
+      <h3 className="mt-5 text-lg font-medium text-gray-900">
         {department.name}
       </h3>
 
@@ -86,7 +86,7 @@ const DepartmentCard = ({ department, onEdit, onDelete, onClick }) => {
 
         {department.department_head_name ? (
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#4b8fe2] text-[10px] font-medium text-white">
               {department.department_head_name
                 .split(" ")
                 .map((n) => n[0])

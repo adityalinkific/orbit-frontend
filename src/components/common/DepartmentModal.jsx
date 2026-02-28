@@ -67,7 +67,7 @@ const DepartmentModal = ({
             {/* Department Name */}
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-900">
-                Department Name <span className="text-red-500">*</span>
+                Department Name
               </label>
               <input
                   required

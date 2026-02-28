@@ -1,4 +1,4 @@
-import { Users, X, Plus } from "lucide-react";
+import { Users, X, Plus, FolderKanban } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getAllUsersService } from "../../services/user.service";
@@ -53,12 +53,28 @@ const DepartmentSidebar = ({ department, isOpen, onClose }) => {
 
   return (
     <>
-      <div className="fixed top-0 right-0 h-screen w-[420px] bg-[#f6f7f9] shadow-2xl z-50 border-l">
+      <div className="fixed top-0 right-0 h-screen w-[420px] bg-[#f6f7f9] shadow-2xl z-50">
         {/* Header */}
-        <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-[#f6f7f9] z-20">
-          <h2 className="text-xl font-semibold truncate text-slate-900">
+        <div className="p-6 flex items-center justify-between sticky top-0 bg-[#f6f7f9] z-20">
+          <div className="flex gap-2 item-center">
+            <h2 className="text-xl text-slate-1000 font-medium truncate text-slate-900">
             {department.name}
           </h2>
+          <div>
+            <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    department.is_active
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {department.is_active ? "active" : "inactive"}
+                </span>
+
+          </div>
+           
+          </div>
+          
           <button
             onClick={onClose}
             className="p-2 text-slate-900 hover:bg-gray-100 rounded-lg"
@@ -67,9 +83,9 @@ const DepartmentSidebar = ({ department, isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className="h-[calc(100vh-80px)] overflow-y-auto p-6">
+          <div className="h-[calc(100vh-80px)] overflow-y-auto p-6 scrollbar-modern">
           {/* Description */}
-          <div className="mb-8 pb-6 border-b">
+          <div className="mb-8 pb-6 ">
             <h3 className="text-sm font-medium text-gray-600 mb-2">
               Description
             </h3>
@@ -93,7 +109,7 @@ const DepartmentSidebar = ({ department, isOpen, onClose }) => {
                 .slice(0, 2)
                 .toUpperCase()}
             </div>
-            <span className="text-slate-900">
+            <span className="text-slate-900 text-sm font-medium">
                 {department.department_head_name}
               </span>
           </div>
@@ -131,7 +147,7 @@ const DepartmentSidebar = ({ department, isOpen, onClose }) => {
                 No members in this department
               </p>
             ) : (
-              <div className="space-y-3 max-h-80 overflow-y-auto">
+              <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-modern">
                 {members.map((member) => (
                   <div
                     key={member.id}
@@ -160,12 +176,12 @@ const DepartmentSidebar = ({ department, isOpen, onClose }) => {
           </div>
 
           {/* ASSOCIATED PROJECTS SECTION */}
-          <div className="mb-8 pt-6 border-t">
-            <h3 className="text-sm font-medium text-gray-500 mb-3">
-              Associated Projects
+          <div className="mb-8 pt-6 bg-[#f6f7f9] ">
+            <h3 className="font-medium text-sm text-gray-600 flex items-center gap-2 mb-2">
+             <FolderKanban size={16} /> Associated Projects
             </h3>
 
-            <div className="rounded-lg border p-4 flex items-center justify-between">
+            <div className="rounded-lg bg-[#f0f2f4] p-2 flex items-center justify-between">
               <span className="text-sm text-gray-600">Total Projects</span>
               <span className="text-lg font-semibold">
                 {deptMeta?.total_associated_projects ?? "—"}
