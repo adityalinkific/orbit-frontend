@@ -10,11 +10,11 @@ import {
 
 import { getAllUsersService } from "../../services/user.service"
 
-import DepartmentModal from "../../components/common/DepartmentModal"
-import DepartmentCard from "../../components/common/DepartmentCard"
-import DepartmentListView from "../../components/common/DepartmentListView"
-import DepartmentsToolbar from "../../components/common/DepartmentsToolbar"
-import DepartmentSidebar from "../../components/common/DepartmentSidebar"
+import DepartmentModal from "../../components/department/DepartmentModal"
+import DepartmentCard from "../../components/department/DepartmentCard"
+import DepartmentListView from "../../components/department/DepartmentListView"
+import DepartmentsToolbar from "../../components/department/DepartmentsToolbar"
+import DepartmentDetailsModal from "../../components/department/DepartmentDetailsModal"
 import DepartmentCardSkeleton from "../../components/department/DepartmentCardSkeleton"
 import DepartmentTableSkeleton from "../../components/department/DepartmentTableSkeleton"
 
@@ -284,10 +284,10 @@ const filteredDepartments = departments
         />
       </div>
 
-      <DepartmentSidebar
-        department={selectedDepartment}
-        isOpen={sidebarOpen}
-        onClose={closeSidebar}
+      <DepartmentDetailsModal
+  department={selectedDepartment}
+  open={sidebarOpen}
+  onOpenChange={setSidebarOpen}
       />
     </>
   )

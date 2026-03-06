@@ -19,6 +19,7 @@ import Settings from "../pages/Dashboard/Settings";
 
 import NotFound from "../pages/NotFound";
 import useAuth from "../hooks/useAuth";
+import Meetings from "../pages/Dashboard/Meetings";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -51,6 +52,7 @@ export default function AppRoutes() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/people" element={<People />} />
         <Route path="/departments" element={<Departments />} />
+        <Route path="/meetings" element={<Meetings/>}/>
         <Route path="/documents" element={<Documents />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/audit" element={<SystemAudit />} />

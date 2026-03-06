@@ -128,22 +128,28 @@ export default function People() {
 
   /* ================= ACTIONS ================= */
 
-  const handleEdit = (user) => {
-    setEditingUser(user);
-    setForm({
-      name: user.name,
-      email: user.email,
-      password: "",
-      role_id: user.role_id || user.role?.id || "",
-      department_id: user.department_id || user.department?.id || "",
-      reporting_manager_id: user.reporting_manager_id || null,
-      is_active: user.is_active,
-      joined_date: user.joined_date
-        ? user.joined_date.split("T")[0]
-        : new Date().toISOString().split("T")[0],
-    });
-    setShowModal(true);
-  };
+const handleEdit = (user) => {
+  setEditingUser(user);
+
+  setForm({
+    name: user.name,
+    email: user.email,
+    password: "",
+
+    role_id: String(user.role_id || user.role?.id || ""),
+    department_id: String(user.department_id || user.department?.id || ""),
+
+    reporting_manager_id: user.reporting_manager_id || null,
+    is_active: user.is_active,
+
+    joined_date: user.joined_date
+      ? user.joined_date.split("T")[0]
+      : new Date().toISOString().split("T")[0],
+  });
+
+  setShowModal(true);
+};
+
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this user?")) return;
@@ -327,7 +333,7 @@ export default function People() {
                     </button>
 
                     {dropdownUserId === u.id && (
-                      <div className="absolute right-0 mt-2 w-40 bg-white border rounded-xl shadow-xl z-20">
+                      <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl z-20">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

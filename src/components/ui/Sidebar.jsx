@@ -12,13 +12,14 @@ import {
 import { FiShield } from "react-icons/fi";
 import { VscRobot } from "react-icons/vsc";
 import { MdOutlineTaskAlt } from "react-icons/md";
-
+import { FaRegCalendar } from "react-icons/fa6";
 const allMenus = {
   all_menu: [
     { name: "Task", icon: <MdOutlineTaskAlt size={20} />, path: "/dashboard" },
     { name: "Projects", icon: <HiOutlineFolder size={20} />, path: "/projects" },
     { name: "People", icon: <HiOutlineUsers size={20} />, path: "/people" },
     { name: "Departments", icon: <HiOutlineOfficeBuilding size={20} />, path: "/departments" },
+    { name: "Meetings", icon: <FaRegCalendar  size={20} />, path: "/meetings" },
     { name: "Documents", icon: <HiOutlineFolder size={20} />, path: "/documents" },
     { name: "Analytics", icon: <HiOutlineChartBar size={20} />, path: "/analytics" },
     { name: "System Audit", icon: <FiShield  size={20} />, path: "/audit" },
@@ -30,6 +31,7 @@ const superAdminMenu = {
   super_admin: [
     { name: "People", icon: <HiOutlineUsers size={20} />, path: "/people" },
     { name: "Departments", icon: <HiOutlineOfficeBuilding size={20} />, path: "/departments" },
+    { name: "Meetings", icon: <FaRegCalendar size={20} />, path: "/meetings" },
     { name: "Settings", icon: <HiOutlineCog size={20} />, path: "/settings" },
   ],
 };
