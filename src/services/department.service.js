@@ -45,6 +45,7 @@ export const updateDepartment = async (id, payload) => {
         typeof payload.department_head_id === "number"
           ? payload.department_head_id
           : null,
+      is_active: payload.is_active,
     }
   )
 
