@@ -2,55 +2,54 @@ import React, { useState } from "react"
 import { FaPlus } from "react-icons/fa6"
 import MeetingModal from "../../components/meetings/MeetingModal"
 import Calendar from "../../components/meetings/Calendar"
+import MeetingsSidebar from "../../components/meetings/MeetingsSidebar"
 
 const MOCK_MEETINGS = [
   {
     id: 1,
     title: "Product Sync",
     date: "2026-03-05",
-    time: "10:00",
+    startTime: "10:00",
+    endTime: "11:00",
     description: "Weekly sync with product team",
-    link: "https://zoom.us/j/123",
   },
   {
     id: 2,
     title: "Design Review",
     date: "2026-03-09",
-    time: "14:00",
+    startTime: "14:00",
+    endTime: "15:00",
     description: "Review new mockups for dashboard",
-    link: "https://zoom.us/j/456",
   },
-  {
-    id: 3,
-    title: "All Hands",
-    date: "2026-03-12",
-    time: "11:00",
-    description: "Monthly company update",
-    link: "https://meet.google.com/abc",
-  },
-  {
-    id: 4,
-    title: "Client Pitch",
-    date: "2026-03-15",
-    time: "15:30",
-    description: "Pitch to new prospective client",
-    link: "https://zoom.us/j/789",
-  }
-];
+]
+
 
 const Meetings = () => {
   const [showModal, setShowModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [modalMode, setModalMode] = useState("create")
   const [meetings, setMeetings] = useState(MOCK_MEETINGS)
+  const [filters, setFilters] = useState({
+  status: "all",
+  participant: "all",
+  type: "all",
+  date: "all",
+})
 
-  const [form, setForm] = useState({
-    title: "",
-    date: "",
-    time: "",
-    description: "",
-    link: "",
-  })
+
+const [form, setForm] = useState({
+  title: "",
+  description: "",
+  date: "",
+  startTime: "09:00",
+  endTime: "10:00",
+  organizer: "Alex Rivera",
+  project: "Internal Ops",
+  attendees: "",
+  sendInvite: true,
+  generateLink: true,
+})
+
 
   const resetForm = () => {
     setForm({
@@ -62,17 +61,58 @@ const Meetings = () => {
     })
   }
 
-  const handleDateClick = (dateStr) => {
-    setForm({
-      title: "",
-      date: dateStr,
-      time: "09:00",
-      description: "",
-      link: "",
-    })
-    setModalMode("create")
-    setShowModal(true)
+const handleDateClick = (dateStr, timeRange) => {
+  setForm({
+    id: undefined,
+    title: "",
+    description: "",
+    date: dateStr,
+    startTime: timeRange?.startTime || "09:00",
+    endTime: timeRange?.endTime || "10:00",
+    organizer: "Alex Rivera",
+    project: "Internal Ops",
+    attendees: "",
+    sendInvite: true,
+    generateLink: true,
+  })
+
+  setModalMode("create")
+  setShowModal(true)
+}
+
+const filteredMeetings = meetings.filter(m => {
+
+  const now = new Date()
+  const meetingDate = new Date(`${m.date}T${m.startTime}`)
+
+  // STATUS
+  if (filters.status === "live") {
+    const end = new Date(`${m.date}T${m.endTime}`)
+    if (!(meetingDate <= now && end >= now)) return false
   }
+
+  if (filters.status === "scheduled" && meetingDate < now) return false
+
+  if (filters.status === "completed" && meetingDate > now) return false
+
+  // TYPE
+  if (filters.type !== "all" && m.type !== filters.type) return false
+
+  // DATE RANGE
+  if (filters.date === "today") {
+    const today = new Date().toISOString().split("T")[0]
+    if (m.date !== today) return false
+  }
+
+  if (filters.date === "week") {
+    const weekLater = new Date()
+    weekLater.setDate(now.getDate() + 7)
+    if (!(meetingDate >= now && meetingDate <= weekLater)) return false
+  }
+
+  return true
+})
+
 
   const handleMeetingClick = (meeting) => {
     setForm(meeting)
@@ -112,44 +152,44 @@ const Meetings = () => {
     }
   }
 
-  return (
-    <div className="relative z-20 min-h-screen bg-gray-50/50 p-8 flex flex-col">
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900 mb-1">Meetings</h1>
-          <p className="text-gray-500 text-sm">Schedule and manage team meetings</p>
-        </div>
+return (
+  <div className="flex h-screen bg-gray-50">
 
-        <button
-          onClick={handleCreateNewClick}
-          className="flex items-center text-[14px] font-medium gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-white transition-colors hover:bg-blue-700 shadow-sm"
-        >
-          <FaPlus /> Schedule Meeting
-        </button>
-      </div>
+    {/* Sidebar */}
+    <MeetingsSidebar meetings={meetings} />
 
-      {/* Calendar View */}
-      <div className="flex-1 h-full min-h-[600px] mb-8">
-        <Calendar
-          meetings={meetings}
+    {/* Main Area */}
+    <div className="flex-1 p-6 flex flex-col">
+
+      <div className="flex-1">
+       <Calendar
+          meetings={filteredMeetings}
+          filters={filters}
+          setFilters={setFilters}
           onDateClick={handleDateClick}
           onMeetingClick={handleMeetingClick}
+          onScheduleClick={handleCreateNewClick}
         />
+
+
       </div>
 
-      {/* Meeting Modal */}
-      <MeetingModal
-        open={showModal}
-        onOpenChange={setShowModal}
-        form={form}
-        setForm={setForm}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        mode={modalMode}
-      />
     </div>
-  )
+
+    <MeetingModal
+      open={showModal}
+      onOpenChange={setShowModal}
+      form={form}
+      setForm={setForm}
+      onSubmit={handleSubmit}
+      isSubmitting={isSubmitting}
+      mode={modalMode}
+    />
+
+  </div>
+)
+
+
 }
 
 export default Meetings
