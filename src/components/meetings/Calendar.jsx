@@ -1,5 +1,4 @@
-// src/components/meetings/Calendar.jsx
-// FIXED: Selection overlay now covers full height of selected tiles
+
 import  { useState, useMemo, useRef, useCallback } from "react"
 import {
   ChevronLeft,
@@ -10,7 +9,7 @@ import {
 } from 'lucide-react'
 import FilterDropdown from "./FilterDropdown"
 
-const HOURS = Array.from({ length: 11 }, (_, i) => 8 + i) // 08:00 - 18:00
+const HOURS = Array.from({ length: 16 }, (_, i) => 8 + i) // 08:00 - 23:00
 const HOUR_HEIGHT = 64 // h-16 = 64px
 
 const monthNames = [
@@ -350,9 +349,18 @@ const Calendar = ({
 
                 {/* Meetings */}
                 {dayMeetings.map(m => {
-                  const [hh, mm] = (m.startTime || "00:00").split(":").map(Number)
-                  const startIndex = Math.max(0, hh - HOURS[0])
+                  const [startH, startM] = (m.startTime || "00:00").split(":").map(Number)
+                  const [endH, endM] = (m.endTime || "00:00").split(":").map(Number)
+
+                  const startIndex = Math.max(0, startH - HOURS[0])
+
+                  const startMinutes = startH * 60 + startM
+                  const endMinutes = endH * 60 + endM
+                  const durationHours = (endMinutes - startMinutes) / 60
+
                   const meetingTop = startIndex * HOUR_HEIGHT
+                  const meetingHeight = durationHours * HOUR_HEIGHT
+
 
                   const meetingDateTime = new Date(`${m.date}T${m.startTime || m.time}`)
                   const isMeetingPast = meetingDateTime < new Date()
@@ -366,9 +374,10 @@ const Calendar = ({
                           : "bg-blue-600 text-white hover:bg-blue-700"
                       }`}
                       style={{
-                        top: `${meetingTop}px`,
-                        height: `60px`,
-                      }}
+                      top: `${meetingTop}px`,
+                      height: `${meetingHeight}px`,
+                    }}
+
                       onClick={e => {
                         e.stopPropagation()
                         onMeetingClick(m)
@@ -391,10 +400,14 @@ const Calendar = ({
             <div
               className="absolute pointer-events-none z-20 border-2 border-dashed border-blue-400 bg-blue-100/30 rounded-lg shadow-lg"
               style={{
-                left: `64px`, // hours column width
-                width: viewMode === "day" 
-                  ? `calc(100% - 64px)` 
-                  : `calc((100% - 64px) / 7)`,
+                left:
+                  viewMode === "day"
+                    ? `64px`
+                    : `calc(64px + ${selection.dayIndex} * ((100% - 64px) / 7))`,
+                width:
+                  viewMode === "day"
+                    ? `calc(100% - 64px)`
+                    : `calc((100% - 64px) / 7)`,
                 top: `${selection.startIndex * HOUR_HEIGHT}px`,
                 height: `${(selection.endIndex - selection.startIndex + 1) * HOUR_HEIGHT}px`,
               }}

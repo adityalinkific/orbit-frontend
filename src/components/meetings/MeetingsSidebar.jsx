@@ -64,7 +64,7 @@ const MeetingsSidebar = ({ meetings }) => {
               className="border border-[#e0e0e0] rounded-lg p-4 hover:shadow-md transition bg-white"
             >
               <div className="flex justify-between items-center">
-                <h4 className="font-semibold text-gray-900">
+                <h4 className="font-medium text-gray-900">
                   {meeting.title}
                 </h4>
 
