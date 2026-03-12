@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { Clock } from "lucide-react"
 
-const MeetingsSidebar = ({ meetings }) => {
+const MeetingsSidebar = ({ meetings, onMeetingClick }) => {
   const [tab, setTab] = useState("upcoming")
 
   const today = new Date().toISOString().split("T")[0]
@@ -25,7 +25,7 @@ const MeetingsSidebar = ({ meetings }) => {
       {/* Tabs */}
       <div className="px-6 py-4 flex gap-2">
 
-        <div className="shadow-md rounded-md bg-[#f1f5f9]">
+        <div className="shadow-md rounded-sm bg-[#f1f5f9]">
 
         <button
           onClick={() => setTab("upcoming")}
@@ -53,7 +53,7 @@ const MeetingsSidebar = ({ meetings }) => {
       </div>
 
       {/* Today label */}
-      <div className="px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+      <div className="px-6 text-xs font-medium text-gray-800 mt-10 uppercase tracking-wider">
         Today, {new Date().toLocaleDateString(undefined, { month:"short", day:"numeric"})}
       </div>
 
@@ -66,8 +66,10 @@ const MeetingsSidebar = ({ meetings }) => {
           return (
             <div
               key={meeting.id}
-              className="border border-[#e0e0e0] rounded-lg p-4 hover:shadow-md hover:border-[#005fff]  transition bg-white"
+              onClick={() => onMeetingClick(meeting)}
+              className="border border-[#e0e0e0] rounded-lg p-4 hover:shadow-md hover:border-[#005fff] transition bg-white cursor-pointer"
             >
+
               <div className="flex justify-between items-center">
                 <h4 className="font-medium text-gray-900">
                   {meeting.title}
@@ -91,10 +93,24 @@ const MeetingsSidebar = ({ meetings }) => {
 
               {/* avatars */}
               <div className="flex justify-between items-center mt-4">
+
                 <div className="flex -space-x-2">
-                  <div className="w-7 h-7 rounded-full bg-gray-200 border"></div>
-                  <div className="w-7 h-7 rounded-full bg-gray-300 border"></div>
-                  <div className="w-7 h-7 rounded-full bg-gray-400 border"></div>
+                  {meeting.participants?.slice(0, 3).map((p) => (
+                    <div
+                      key={p.id}
+                      title={p.name}
+                      className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 border flex items-center justify-center text-[10px] font-semibold"
+                    >
+
+                      {p.name?.split(" ").map(n => n[0]).join("")}
+                    </div>
+                  ))}
+
+                  {meeting.participants?.length > 3 && (
+                    <div className="w-7 h-7 rounded-full bg-gray-200 border flex items-center justify-center text-[10px]">
+                      +{meeting.participants.length - 3}
+                    </div>
+                  )}
                 </div>
 
                 {isLive && (

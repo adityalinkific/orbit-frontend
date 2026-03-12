@@ -3,6 +3,7 @@ import { FaPlus } from "react-icons/fa6"
 import MeetingModal from "../../components/meetings/MeetingModal"
 import Calendar from "../../components/meetings/Calendar"
 import MeetingsSidebar from "../../components/meetings/MeetingsSidebar"
+import MeetingDetails from "../../components/meetings/MeetingDetails"
 
 const MOCK_MEETINGS = [
   {
@@ -29,6 +30,7 @@ const Meetings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [modalMode, setModalMode] = useState("create")
   const [meetings, setMeetings] = useState(MOCK_MEETINGS)
+  const [selectedMeeting, setSelectedMeeting] = useState(null)
   const [filters, setFilters] = useState({
   status: "all",
   participant: "all",
@@ -141,11 +143,22 @@ const filteredMeetings = meetings.filter(m => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800))
 
-      if (modalMode === "create") {
-        setMeetings([...meetings, { ...form, id: Date.now() }])
-      } else {
-        setMeetings(meetings.map(m => m.id === form.id ? form : m))
-      }
+      const meetingPayload = {
+  ...form,
+  id: form.id || Date.now(),
+  participants: form.attendees || []
+}
+
+if (modalMode === "create") {
+  setMeetings([...meetings, meetingPayload])
+} else {
+  setMeetings(
+    meetings.map(m =>
+      m.id === form.id ? meetingPayload : m
+    )
+  )
+}
+
 
       console.log("Meeting saved:", form)
 
@@ -160,28 +173,46 @@ const filteredMeetings = meetings.filter(m => {
   }
 
 return (
-  <div className="flex h-screen bg-gray-50">
+  <div className="h-screen bg-gray-50">
 
-    {/* Sidebar */}
-    <MeetingsSidebar meetings={meetings} />
+    {selectedMeeting ? (
 
-    {/* Main Area */}
-    <div className="flex-1 p-6 flex flex-col">
+      /* FULL PAGE MEETING DETAILS */
+      <MeetingDetails
+        meeting={selectedMeeting}
+        onBack={() => setSelectedMeeting(null)}
+      />
 
-      <div className="flex-1">
-       <Calendar
-          meetings={filteredMeetings}
-          filters={filters}
-          setFilters={setFilters}
-          onDateClick={handleDateClick}
-          onMeetingClick={handleMeetingClick}
-          onScheduleClick={handleCreateNewClick}
+    ) : (
+
+      /* NORMAL MEETINGS PAGE */
+      <div className="flex h-full">
+
+        {/* Sidebar */}
+        <MeetingsSidebar
+          meetings={meetings}
+          onMeetingClick={(meeting) => setSelectedMeeting(meeting)}
         />
 
+        {/* Main Area */}
+        <div className="flex-1 p-6 flex flex-col">
+
+          <div className="flex-1">
+            <Calendar
+              meetings={filteredMeetings}
+              filters={filters}
+              setFilters={setFilters}
+              onDateClick={handleDateClick}
+              onMeetingClick={handleMeetingClick}
+              onScheduleClick={handleCreateNewClick}
+            />
+          </div>
+
+        </div>
 
       </div>
 
-    </div>
+    )}
 
     <MeetingModal
       open={showModal}
@@ -195,6 +226,7 @@ return (
 
   </div>
 )
+
 
 
 }
