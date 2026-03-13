@@ -1,5 +1,5 @@
 
-import  { useState, useMemo, useRef, useCallback } from "react"
+import { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import {
   ChevronLeft,
   ChevronRight,
@@ -39,6 +39,16 @@ const Calendar = ({
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState("week")
   const [selection, setSelection] = useState(null)
+  const [now, setNow] = useState(new Date())
+
+// update every minute
+useEffect(() => {
+  const interval = setInterval(() => {
+    setNow(new Date())
+  }, 60000)
+
+  return () => clearInterval(interval)
+}, [])
 
   const today = useMemo(() => new Date(), [])
   const todayStr = formatDateStr(today)
@@ -277,6 +287,20 @@ const Calendar = ({
   // FIXED time grid with proper selection overlay
   const renderTimeGrid = () => {
     const daysToShow = viewMode === "day" ? [currentDate] : weekDates
+    const currentHour = now.getHours()
+const currentMinutes = now.getMinutes()
+
+const firstHour = HOURS[0]
+const lastHour = HOURS[HOURS.length - 1]
+
+let currentTimeTop = null
+
+if (currentHour >= firstHour && currentHour <= lastHour) {
+  const hourOffset = currentHour - firstHour
+  const minuteOffset = currentMinutes / 60
+  currentTimeTop = (hourOffset + minuteOffset) * HOUR_HEIGHT
+}
+
 
     return (
       <div 
