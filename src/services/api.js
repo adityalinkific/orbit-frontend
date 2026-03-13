@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE = "https://orbit-api-zw0b.onrender.com/api/v1";
+const apiUrl = import.meta.env.VITE_API_URL || "https://orbit-8b7k.onrender.com";
+const API_BASE = apiUrl.endsWith("/api/v1") ? apiUrl : `${apiUrl}/api/v1`;
 
 const api = axios.create({
   baseURL: API_BASE,

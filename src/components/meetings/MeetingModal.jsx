@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog"
 import * as Switch from "@radix-ui/react-switch"
-import { X, Check } from "lucide-react"
+import { X, Check, Copy } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { getAllUsersService } from "../../services/user.service"
@@ -20,68 +20,110 @@ const MeetingModal = ({
 
   const [users, setUsers] = useState([])
   const [search, setSearch] = useState("")
+  const [copied, setCopied] = useState(false)
 
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  /* ---------------- FETCH USERS ---------------- */
-useEffect(() => {
-  const fetchUsers = async () => {
-    try {
-      const res = await getAllUsersService()
+  /* ---------------- MEETING LINK & EMAIL LOGIC ---------------- */
+  useEffect(() => {
+    if (form.generateLink && !form.meetingLink) {
+      const randomId = Math.random().toString(36).substring(2, 12)
+      setForm((prev) => ({ ...prev, meetingLink: `https://meet.orbit.com/${randomId}` }))
+    } else if (!form.generateLink && form.meetingLink) {
+      setForm((prev) => ({ ...prev, meetingLink: "" }))
+    }
+  }, [form.generateLink, form.meetingLink, setForm])
 
-      // API returns { status, message, data }
-      setUsers(res?.data || [])
-
-    } catch (err) {
-      console.error("Failed to fetch users", err)
+  const copyLink = () => {
+    if (form.meetingLink) {
+      navigator.clipboard.writeText(form.meetingLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     }
   }
 
-  if (open) fetchUsers()
-}, [open])
+  const handleLocalSubmit = (e) => {
+    e.preventDefault()
+
+    if (form.sendInvite && form.attendees?.length > 0) {
+      const emails = form.attendees.map((a) => a.email).filter(Boolean).join(",")
+      if (emails) {
+        const subject = encodeURIComponent(`Meeting Invite: ${form.title}`)
+        const body = encodeURIComponent(
+          `You are invited to a meeting.\n\n` +
+          `Title: ${form.title || 'Untitled Meeting'}\n` +
+          `Date: ${form.date}\n` +
+          `Time: ${form.startTime} - ${form.endTime}\n` +
+          (form.description ? `Agenda/Notes: ${form.description}\n` : "") +
+          (form.generateLink && form.meetingLink ? `\nJoin Meeting: ${form.meetingLink}\n` : "")
+        )
+        window.location.href = `mailto:${emails}?subject=${subject}&body=${body}`
+      }
+    }
+
+    // Call the parent's onSubmit
+    if (onSubmit) onSubmit(e)
+  }
+
+  /* ---------------- FETCH USERS ---------------- */
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await getAllUsersService()
+
+        // API returns { status, message, data }
+        setUsers(res?.data || [])
+
+      } catch (err) {
+        console.error("Failed to fetch users", err)
+      }
+    }
+
+    if (open) fetchUsers()
+  }, [open])
 
 
   /* ---------------- ORGANIZERS ---------------- */
-const organizers = users.filter((u) =>
-  ["admin", "superadmin", "manager"].includes(
-    u.role?.role?.toLowerCase()
+  const organizers = users.filter((u) =>
+    ["admin", "superadmin", "manager"].includes(
+      u.role?.role?.toLowerCase()
+    )
   )
-)
 
-const filteredUsers = useMemo(() => {
-  return users.filter((u) =>
-    u.name.toLowerCase().includes(search.toLowerCase())
-  )
-}, [users, search])
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) =>
+      u.name.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [users, search])
 
 
-const toggleAttendee = (user) => {
-  setForm((prev) => {
-    const attendees = prev.attendees || []
+  const toggleAttendee = (user) => {
+    setForm((prev) => {
+      const attendees = prev.attendees || []
 
-    const exists = attendees.some((u) => u.id === user.id)
+      const exists = attendees.some((u) => u.id === user.id)
 
-    return {
-      ...prev,
-      attendees: exists
-        ? attendees.filter((u) => u.id !== user.id)
-        : [...attendees, user],
-    }
-  })
-}
-
-const getInitials = (name = "") => {
-  const parts = name.trim().split(" ")
-
-  if (parts.length === 1) {
-    return parts[0][0]?.toUpperCase()
+      return {
+        ...prev,
+        attendees: exists
+          ? attendees.filter((u) => u.id !== user.id)
+          : [...attendees, user],
+      }
+    })
   }
 
-  return (parts[0][0] + parts[1][0]).toUpperCase()
-}
+  const getInitials = (name = "") => {
+    const parts = name.trim().split(" ")
+
+    if (parts.length === 1) {
+      return parts[0][0]?.toUpperCase()
+    }
+
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  }
 
 
 
@@ -117,7 +159,7 @@ const getInitials = (name = "") => {
 
           {/* BODY */}
           <form
-            onSubmit={onSubmit}
+            onSubmit={handleLocalSubmit}
             className="p-6 grid grid-cols-2 gap-x-6 gap-y-5"
           >
 
@@ -229,20 +271,40 @@ const getInitials = (name = "") => {
               </div>
 
               {/* GENERATE LINK SWITCH */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">
-                  Generate meeting link
-                </span>
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">
+                    Generate meeting link
+                  </span>
 
-                <Switch.Root
-                  checked={form.generateLink}
-                  onCheckedChange={(val) =>
-                    updateField("generateLink", val)
-                  }
-                  className="relative h-5 w-9 rounded-full bg-gray-200 data-[state=checked]:bg-blue-600 outline-none"
-                >
-                  <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white transition-transform data-[state=checked]:translate-x-4" />
-                </Switch.Root>
+                  <Switch.Root
+                    checked={form.generateLink}
+                    onCheckedChange={(val) =>
+                      updateField("generateLink", val)
+                    }
+                    className="relative h-5 w-9 rounded-full bg-gray-200 data-[state=checked]:bg-blue-600 outline-none"
+                  >
+                    <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white transition-transform data-[state=checked]:translate-x-4" />
+                  </Switch.Root>
+                </div>
+
+                {form.generateLink && form.meetingLink && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={form.meetingLink}
+                      className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={copyLink}
+                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                      title="Copy Link"
+                    >
+                      {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -302,87 +364,87 @@ const getInitials = (name = "") => {
               </div>
 
               {/* ATTENDEES */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Attendees
-                  </label>
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Attendees
+                </label>
 
-                  {/* Selected users */}
-                  {form.attendees?.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2 mb-2">
-                      {form.attendees.map((user) => (
-                        <span
-                          key={user.id}
-                          className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-xs"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className="h-5 w-5 flex items-center justify-center rounded-full bg-[#4b8fe2] text-white text-[10px] font-semibold">
-                              {getInitials(user.name)}
-                            </div>
-
-                            <span>{user.name}</span>
+                {/* Selected users */}
+                {form.attendees?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                    {form.attendees.map((user) => (
+                      <span
+                        key={user.id}
+                        className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="h-5 w-5 flex items-center justify-center rounded-full bg-[#4b8fe2] text-white text-[10px] font-semibold">
+                            {getInitials(user.name)}
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => toggleAttendee(user)}
-                            className="text-gray-500 hover:text-red-500"
-                          >
-                            <X size={12} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                          <span>{user.name}</span>
+                        </div>
 
-                  {/* Search */}
-                  <input
-                    placeholder="Search users..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full mb-2 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-
-                  {/* Users list */}
-                  <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-[#e0e0e0]">
-
-                    {filteredUsers.map((user) => {
-                      const active = form.attendees?.some((u) => u.id === user.id)
-
-                      return (
                         <button
-                          key={user.id}
                           type="button"
                           onClick={() => toggleAttendee(user)}
-                          className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50
-                          ${active ? "bg-blue-50" : ""}`}
+                          className="text-gray-500 hover:text-red-500"
                         >
-                          <div className="flex items-center gap-2">
-                            <div className="h-6 w-6 flex items-center justify-center rounded-full bg-[#4b8fe2] text-white text-[10px] font-semibold">
-                              {getInitials(user.name)}
-                            </div>
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-                            <span>
-                              {user.name}
-                              <span className="text-xs text-gray-400 ml-1">
-                                ({user.role?.role})
-                              </span>
-                            </span>
+                {/* Search */}
+                <input
+                  placeholder="Search users..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full mb-2 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                {/* Users list */}
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-[#e0e0e0]">
+
+                  {filteredUsers.map((user) => {
+                    const active = form.attendees?.some((u) => u.id === user.id)
+
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => toggleAttendee(user)}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50
+                          ${active ? "bg-blue-50" : ""}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 flex items-center justify-center rounded-full bg-[#4b8fe2] text-white text-[10px] font-semibold">
+                            {getInitials(user.name)}
                           </div>
 
+                          <span>
+                            {user.name}
+                            <span className="text-xs text-gray-400 ml-1">
+                              ({user.role?.role})
+                            </span>
+                          </span>
+                        </div>
 
-                          {active && <Check size={16} className="text-blue-600" />}
-                        </button>
-                      )
-                    })}
 
-                    {filteredUsers.length === 0 && (
-                      <div className="p-3 text-sm text-gray-500 text-center">
-                        No users found
-                      </div>
-                    )}
-                  </div>
+                        {active && <Check size={16} className="text-blue-600" />}
+                      </button>
+                    )
+                  })}
+
+                  {filteredUsers.length === 0 && (
+                    <div className="p-3 text-sm text-gray-500 text-center">
+                      No users found
+                    </div>
+                  )}
                 </div>
+              </div>
 
 
 
@@ -408,8 +470,8 @@ const getInitials = (name = "") => {
                 {isSubmitting
                   ? "Saving..."
                   : mode === "edit"
-                  ? "Update Meeting"
-                  : "Schedule Meeting"}
+                    ? "Update Meeting"
+                    : "Schedule Meeting"}
               </button>
 
             </div>
