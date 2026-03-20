@@ -15,7 +15,7 @@ import { MdOutlineTaskAlt } from "react-icons/md";
 import { FaRegCalendar } from "react-icons/fa6";
 const allMenus = {
   all_menu: [
-    { name: "Task", icon: <MdOutlineTaskAlt size={20} />, path: "/dashboard" },
+    { name: "Task", icon: <MdOutlineTaskAlt size={20} />, path: "/task" },
     { name: "Projects", icon: <HiOutlineFolder size={20} />, path: "/projects" },
     { name: "People", icon: <HiOutlineUsers size={20} />, path: "/people" },
     { name: "Departments", icon: <HiOutlineOfficeBuilding size={20} />, path: "/departments" },
@@ -32,6 +32,7 @@ const superAdminMenu = {
     { name: "People", icon: <HiOutlineUsers size={20} />, path: "/people" },
     { name: "Departments", icon: <HiOutlineOfficeBuilding size={20} />, path: "/departments" },
     { name: "Meetings", icon: <FaRegCalendar size={20} />, path: "/meetings" },
+    { name: "Task", icon: <MdOutlineTaskAlt size={20} />, path: "/task" },
     { name: "Settings", icon: <HiOutlineCog size={20} />, path: "/settings" },
   ],
 };
