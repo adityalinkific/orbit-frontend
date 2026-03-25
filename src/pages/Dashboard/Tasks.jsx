@@ -62,9 +62,9 @@ export default function Tasks() {
   };
 
   return (
-    <div className="bg-[#F9FBFC] min-h-screen flex flex-col">
+    <div className="bg-[#F9FBFC] h-screen flex flex-col w-full overflow-hidden">
       {/* Header - Added sticky and subtle shadow */}
-      <div className="sticky top-0 z-50 flex flex-wrap bg-white justify-between items-center px-6 py-4 border-b border-gray-200 gap-4 shadow-sm">
+      <div className="sticky top-0 z-50 flex flex-wrap bg-[#f8fafb] justify-between items-center px-6 py-4 border-b border-gray-200 gap-4 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="relative w-[300px] lg:w-[450px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -165,39 +165,47 @@ export default function Tasks() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden w-280" >
+      <div className="flex-1 w-full flex overflow-hidden">
         {view === "list" ? (
-          <div className="grid grid-cols-12 h-[calc(100vh-73px)]">
-            {/* Sidebar Column */}
-            <div className="col-span-12 lg:col-span-4 h-full bg-white border-r border-gray-200 flex flex-col">
-              <div className="px-4 border-b border-gray-100 bg-white">
+          <>
+            {/* Sidebar */}
+            <div className="w-[360px] border-r border-gray-200 bg-white flex flex-col">
+              <div className="px-4 py-2 border-b border-gray-100">
                 <TaskTabs tab={tab} setTab={setTab} />
               </div>
+
               <div className="flex-1 overflow-y-auto bg-[#F9FBFC]">
-                <TaskSidebar tasks={tasks} onSelect={setSelectedTask} selectedId={selectedTask?.id} />
+                <TaskSidebar
+                  tasks={tasks}
+                  onSelect={setSelectedTask}
+                  selectedId={selectedTask?.id}
+                />
               </div>
             </div>
-            
-            {/* Details Column */}
-            <div className="hidden lg:block lg:col-span-8 bg-white overflow-y-auto">
+
+            {/* Details */}
+            <div className="flex-1 overflow-y-auto bg-white p-6">
               {selectedTask ? (
                 <TaskDetails task={selectedTask} />
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 p-10">
-                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                     <TextAlignJustify size={32} />
-                   </div>
-                   <p className="font-medium text-sm">Select a task to view details</p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <TextAlignJustify size={32} />
+                  </div>
+                  <p className="text-sm font-medium">
+                    Select a task to view details
+                  </p>
                 </div>
               )}
             </div>
-          </div>
+          </>
         ) : (
-          <div className="p-6 overflow-x-auto h-[calc(100vh-73px)]">
-            {/* <KanbanBoard tasks={tasks} /> */}
+          <div className="flex-1 overflow-auto p-6 bg-[#F9FBFC]">
+            <KanbanBoard tasks={tasks} />
           </div>
         )}
       </div>
+
 
       <CreateTaskModal open={open} onOpenChange={setOpen} reload={loadTasks} />
     </div>

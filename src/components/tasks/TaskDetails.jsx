@@ -1,3 +1,5 @@
+import { Check } from "lucide-react";
+
 export default function TaskDetails({ task }) {
   if (!task) return <div className="flex items-center justify-center h-full text-gray-400">Select a task to view details</div>;
 
