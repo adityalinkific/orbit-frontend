@@ -51,17 +51,21 @@ export default function AssignTaskModal({ open, onOpenChange, task, reload }) {
                 <Select.Trigger className="w-full p-4 border-2 border-gray-200 rounded-2xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200">
                   <Select.Value placeholder="Select intern" />
                 </Select.Trigger>
-                <Select.Content className="bg-white shadow-2xl rounded-2xl border border-gray-200 w-full mt-2">
-                  <Select.Item value="1" className="px-6 py-4 hover:bg-blue-50 cursor-pointer focus:bg-blue-50">
-                    John Doe (Intern)
-                  </Select.Item>
-                  <Select.Item value="2" className="px-6 py-4 hover:bg-blue-50 cursor-pointer focus:bg-blue-50">
-                    Jane Smith (Intern)
-                  </Select.Item>
-                  <Select.Item value="3" className="px-6 py-4 hover:bg-blue-50 cursor-pointer focus:bg-blue-50">
-                    Mike Johnson (Intern)
-                  </Select.Item>
-                </Select.Content>
+                <Select.Portal>
+                  <Select.Content className="bg-white shadow-2xl rounded-2xl border border-gray-200 w-full mt-2 z-[110]">
+                    <Select.Viewport>
+                      <Select.Item value="1" className="px-6 py-4 hover:bg-blue-50 cursor-pointer focus:bg-blue-50 outline-none">
+                        <Select.ItemText>John Doe (Intern)</Select.ItemText>
+                      </Select.Item>
+                      <Select.Item value="2" className="px-6 py-4 hover:bg-blue-50 cursor-pointer focus:bg-blue-50 outline-none">
+                        <Select.ItemText>Jane Smith (Intern)</Select.ItemText>
+                      </Select.Item>
+                      <Select.Item value="3" className="px-6 py-4 hover:bg-blue-50 cursor-pointer focus:bg-blue-50 outline-none">
+                        <Select.ItemText>Mike Johnson (Intern)</Select.ItemText>
+                      </Select.Item>
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select.Portal>
               </Select.Root>
             </div>
 

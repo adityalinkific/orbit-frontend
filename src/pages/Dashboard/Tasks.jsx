@@ -3,12 +3,13 @@ import { TaskTabs } from "../../components/tasks/TaskTabs";
 import TaskSidebar from "../../components/tasks/TaskSidebar";
 import TaskDetails from "../../components/tasks/TaskDetails";
 import CreateTaskModal from "../../components/tasks/CreateTaskModal";
+import EditTaskModal from "../../components/tasks/EditTaskModal";
 import KanbanBoard from "../../components/tasks/KanbanBoard";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Search, Check, SquareDashedKanban, TextAlignJustify } from "lucide-react"; // Added Check and Search
 
 // Assuming these are your service imports
-import { getAllTasksService } from "../../services/tasks.services";
+import { getAllTasksService, updateTaskService, deleteTaskService } from "../../services/tasks.services";
 import { meService } from "../../services/auth.service";
 
 const sortOptions = [
@@ -32,6 +33,8 @@ export default function Tasks() {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState("list");
   const [tab, setTab] = useState("ongoing");
+  const [editOpen, setEditOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
 
   // --- ADDED MISSING STATE ---
   const [status, setStatus] = useState("all");
@@ -59,6 +62,34 @@ export default function Tasks() {
     } catch (err) {
       console.error("Tasks load failed", err);
     }
+  };
+
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      // Create a copy of tasks to show optimistic UI update
+      setTasks(prev => prev.map(t => t.id === Number(taskId) ? { ...t, status: newStatus } : t));
+      await updateTaskService(taskId, { status: newStatus });
+      loadTasks();
+    } catch (err) {
+      console.error("Failed to update status", err);
+      loadTasks(); // Revert on failure
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    try {
+      await deleteTaskService(taskId);
+      if (selectedTask?.id === taskId) setSelectedTask(null);
+      loadTasks();
+    } catch (err) {
+      console.error("Failed to delete task", err);
+    }
+  };
+
+  const handleEditTask = (task) => {
+    setTaskToEdit(task);
+    setEditOpen(true);
   };
 
   return (
@@ -186,7 +217,7 @@ export default function Tasks() {
             {/* Details */}
             <div className="flex-1 overflow-y-auto bg-white p-6">
               {selectedTask ? (
-                <TaskDetails task={selectedTask} />
+                <TaskDetails task={selectedTask} onEdit={handleEditTask} onDelete={handleDeleteTask} />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400">
                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
@@ -201,13 +232,14 @@ export default function Tasks() {
           </>
         ) : (
           <div className="flex-1 overflow-auto p-6 bg-[#F9FBFC]">
-            <KanbanBoard tasks={tasks} />
+            <KanbanBoard tasks={tasks} onStatusChange={handleStatusChange} />
           </div>
         )}
       </div>
 
 
       <CreateTaskModal open={open} onOpenChange={setOpen} reload={loadTasks} />
+      <EditTaskModal open={editOpen} onOpenChange={setEditOpen} reload={loadTasks} task={taskToEdit} />
     </div>
   );
 }

@@ -1,23 +1,41 @@
-import { Check } from "lucide-react";
+import { Check, Edit2, Trash2 } from "lucide-react";
 
-export default function TaskDetails({ task }) {
+export default function TaskDetails({ task, onEdit, onDelete }) {
   if (!task) return <div className="flex items-center justify-center h-full text-gray-400">Select a task to view details</div>;
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl relative">
+      {/* Action Buttons removed for now */}
+      <div className="absolute top-0 right-0 flex gap-2">
+      </div>
+
       <div className="flex gap-2 mb-4">
-        <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded text-xs font-bold uppercase">Marketing</span>
-        <span className="bg-red-50 text-red-600 px-3 py-1 rounded text-xs font-bold uppercase">High Priority</span>
+        <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded text-xs font-bold uppercase">{task.dept || 'Department'}</span>
+        <span className={`px-3 py-1 rounded text-xs font-bold uppercase ${
+          task.priority?.toLowerCase() === 'high' ? 'bg-red-50 text-red-600' : 
+          task.priority?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-600' : 
+          'bg-emerald-50 text-emerald-600'
+        }`}>
+          {task.priority || 'Low'} Priority
+        </span>
       </div>
       
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">{task.title}</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-4 pr-24">{task.title}</h1>
       
       <div className="flex gap-2 mb-8">
-        {['#planning', '#strategy', '#quarterly'].map(tag => (
-          <span key={tag} className="px-3 py-1 border border-gray-200 rounded-full text-xs text-gray-500 font-medium">
-            {tag}
+        <span className="px-3 py-1 border border-gray-200 rounded-full text-xs text-gray-500 font-medium capitalize flex items-center gap-1.5">
+          <div className={`w-2 h-2 rounded-full ${
+            task.status === 'completed' ? 'bg-emerald-500' :
+            task.status === 'in-progress' ? 'bg-blue-500' :
+            'bg-gray-400'
+          }`} />
+          {task.status?.replace('-', ' ') || 'To Do'}
+        </span>
+        {task.due_date && (
+          <span className="px-3 py-1 border border-gray-200 rounded-full text-xs text-gray-500 font-medium">
+            Due: {task.due_date}
           </span>
-        ))}
+        )}
       </div>
 
       {/* AI Banner */}
@@ -36,27 +54,9 @@ export default function TaskDetails({ task }) {
 
       <section className="mb-8">
         <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Description</h3>
-        <p className="text-gray-600 leading-relaxed bg-white border border-gray-100 p-6 rounded-xl shadow-sm italic">
-          Complete overhaul of the Q4 marketing plan to focus on the new product line launch...
+        <p className="text-gray-600 leading-relaxed bg-white border border-gray-100 p-6 rounded-xl shadow-sm whitespace-pre-wrap">
+          {task.description || 'No description provided...'}
         </p>
-      </section>
-
-      <section>
-        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Suggested Execution Steps</h3>
-        <div className="space-y-3">
-          {[
-            { text: "Audit previous Q3 campaign performance data", done: true },
-            { text: "Define core KPIs and budget limits for Q4", done: false },
-            { text: "Draft new creative assets brief for design team", done: false },
-          ].map((step, i) => (
-            <div key={i} className="flex items-center gap-4 bg-white p-4 border border-gray-100 rounded-xl group hover:border-blue-200 transition-all cursor-pointer">
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${step.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-200'}`}>
-                {step.done && <Check className="w-3 h-3" />}
-              </div>
-              <span className={`text-sm font-medium ${step.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{step.text}</span>
-            </div>
-          ))}
-        </div>
       </section>
     </div>
   );

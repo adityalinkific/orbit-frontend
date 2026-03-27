@@ -24,14 +24,18 @@ const getDeptStyles = (dept) => {
 };
 
 const columnConfig = {
-  todo: { title: "To Do", countColor: "text-gray-400" },
-  inprogress: { title: "In Progress", countColor: "text-blue-500" },
-  done: { title: "Completed", countColor: "text-emerald-500" }
+  "to-do": { title: "To Do", countColor: "text-gray-400" },
+  "in-progress": { title: "In Progress", countColor: "text-blue-500" },
+  "completed": { title: "Completed", countColor: "text-emerald-500" }
 };
 
-function TaskCard({ task }) {
+function TaskCard({ task, onDragStart }) {
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-blue-400 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group">
+    <div 
+      draggable
+      onDragStart={(e) => onDragStart(e, task)}
+      className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-blue-400 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group"
+    >
       <div className="flex justify-between items-start mb-3">
         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getDeptStyles(task.dept || 'Product')}`}>
           {task.dept || 'Product'}
@@ -63,28 +67,52 @@ function TaskCard({ task }) {
   );
 }
 
-export default function KanbanBoard({ tasks = [] }) {
+export default function KanbanBoard({ tasks = [], onStatusChange }) {
   const [columnTasks, setColumnTasks] = useState({
-    todo: [],
-    inprogress: [],
-    done: []
+    "to-do": [],
+    "in-progress": [],
+    "completed": []
   });
 
+  const [draggedTaskId, setDraggedTaskId] = useState(null);
+
   useEffect(() => {
-    // Simple mock grouping logic - replace with your actual status mapping
-    const newColumns = { todo: [], inprogress: [], done: [] };
+    const newColumns = { "to-do": [], "in-progress": [], "completed": [] };
     tasks.forEach(task => {
-      if (task.status === 'completed') newColumns.done.push(task);
-      else if (task.status === 'inprogress') newColumns.inprogress.push(task);
-      else newColumns.todo.push(task);
+      if (task.status === 'completed') newColumns["completed"].push(task);
+      else if (task.status === 'in-progress') newColumns["in-progress"].push(task);
+      else newColumns["to-do"].push(task);
     });
     setColumnTasks(newColumns);
   }, [tasks]);
 
+  const handleDragStart = (e, task) => {
+    e.dataTransfer.setData("taskId", task.id);
+    setDraggedTaskId(task.id);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault(); // Necessary to allow dropping
+  };
+
+  const handleDrop = (e, columnId) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData("taskId");
+    setDraggedTaskId(null);
+    if (taskId && onStatusChange) {
+      onStatusChange(taskId, columnId);
+    }
+  };
+
   return (
     <div className="flex gap-6 h-full overflow-x-auto pb-4">
       {Object.entries(columnConfig).map(([columnId, config]) => (
-        <div key={columnId} className="flex-shrink-0 w-[350px] flex flex-col">
+        <div 
+          key={columnId} 
+          className="flex-shrink-0 w-[350px] flex flex-col"
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, columnId)}
+        >
           {/* Header */}
           <div className="flex items-center justify-between mb-4 px-2">
             <div className="flex items-center gap-3">
@@ -101,7 +129,11 @@ export default function KanbanBoard({ tasks = [] }) {
           {/* Column Content */}
           <div className="flex-1 bg-gray-100/50 rounded-2xl p-3 border border-gray-200/50 space-y-3 overflow-y-auto max-h-[calc(100vh-250px)]">
             {columnTasks[columnId]?.map((task) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                onDragStart={handleDragStart} 
+              />
             ))}
             
             {columnTasks[columnId]?.length === 0 && (

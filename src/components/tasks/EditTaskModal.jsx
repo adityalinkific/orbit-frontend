@@ -1,109 +1,86 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Select from "@radix-ui/react-select";
 import { useState, useEffect } from "react";
-import { createTaskService } from "../../services/tasks.services";
+import { updateTaskService } from "../../services/tasks.services";
 import { getDepartments } from "../../services/department.service"; 
 import { getAllUsersService } from "../../services/user.service"; 
 import { Cross2Icon, ChevronDownIcon, CheckIcon } from "@radix-ui/react-icons";
-import { Plus, User, Building2, AlertCircle } from "lucide-react";
+import { Save } from "lucide-react";
 
-export default function CreateTaskModal({ open, onOpenChange, reload }) {
+export default function EditTaskModal({ open, onOpenChange, reload, task }) {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    project_id: 1, // Defaulting to 1 as per API schema requirement
+    project_id: 1,
     department_id: "",
-    user_id: "", // For task assignment
+    user_id: "",
     task_type: "daily",
     priority: "low",
     due_date: "",
+    status: "to-do"
   });
 
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fetchingData, setFetchingData] = useState(false);
 
-  // Fetch Dropdown Data
   useEffect(() => {
     if (open) {
-    const fetchData = async () => {
-      setFetchingData(true);
-      try {
-        const [deptData, userRes] = await Promise.all([
-          getDepartments(),
-          getAllUsersService()
-        ]);
+      const fetchData = async () => {
+        try {
+          const [deptData, userRes] = await Promise.all([
+            getDepartments(),
+            getAllUsersService()
+          ]);
+          const userList = Array.isArray(userRes) ? userRes : userRes?.data || [];
+          setDepartments(Array.isArray(deptData) ? deptData : []);
+          setUsers(userList);
+        } catch (err) {
+          console.error("Error fetching modal data:", err);
+        }
+      };
+      fetchData();
 
-        // Validate that we are setting an array to state
-        // If userRes is { status: "...", data: [...] }, we need userRes.data
-        const userList = Array.isArray(userRes) ? userRes : userRes?.data || [];
-        
-        setDepartments(Array.isArray(deptData) ? deptData : []);
-        setUsers(userList);
-        
-      } catch (err) {
-        console.error("Error fetching modal data:", err);
-        setUsers([]); // Fallback to empty array on error
-      } finally {
-        setFetchingData(false);
+      if (task) {
+        setForm({
+          title: task.title || "",
+          description: task.description || "",
+          project_id: task.project_id || 1,
+          department_id: task.department_id?.toString() || "",
+          user_id: task.user_id?.toString() || "",
+          task_type: task.task_type || "daily",
+          priority: task.priority || "low",
+          due_date: task.due_date || "",
+          status: task.status || "to-do"
+        });
       }
-    };
-    fetchData();
-
-      // Set default date to tomorrow
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      setForm(prev => ({
-        ...prev,
-        due_date: tomorrow.toISOString().split('T')[0]
-      }));
     }
-  }, [open]);
+  }, [open, task]);
 
   const handleSubmit = async () => {
     if (!form.title.trim() || !form.department_id) return;
     
     setLoading(true);
     try {
-      // 1. Create the Task
-      const taskRes = await createTaskService({
+      await updateTaskService(task.id, {
         title: form.title,
         description: form.description,
         project_id: Number(form.project_id),
         department_id: Number(form.department_id),
+        user_id: form.user_id ? Number(form.user_id) : undefined,
         task_type: form.task_type,
         priority: form.priority,
-        due_date: form.due_date
+        due_date: form.due_date,
+        status: form.status
       });
-
-      // 2. If a user was selected, assign the task (Using your task-assign API logic)
-      if (form.user_id && taskRes?.id) {
-        // You would call your taskAssignService here
-        // await taskAssignService({ task_id: taskRes.id, user_id: form.user_id, due_date: form.due_date });
-      }
 
       reload();
       onOpenChange(false);
-      resetForm();
     } catch (error) {
-      console.error("Failed to create task:", error);
+      console.error("Failed to update task:", error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    setForm({
-      title: "",
-      description: "",
-      project_id: 1,
-      department_id: "",
-      user_id: "",
-      task_type: "daily",
-      priority: "low",
-      due_date: "",
-    });
   };
 
   return (
@@ -114,8 +91,8 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
           
           <div className="flex justify-between items-center mb-6">
             <div>
-              <Dialog.Title className="text-xl font-bold text-slate-900">Create New Task</Dialog.Title>
-              <Dialog.Description className="text-sm text-slate-500 mt-1">Assign tasks to departments and team members.</Dialog.Description>
+              <Dialog.Title className="text-xl font-bold text-slate-900">Edit Task</Dialog.Title>
+              <Dialog.Description className="text-sm text-slate-500 mt-1">Update task details and assignments.</Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><Cross2Icon className="w-5 h-5" /></button>
@@ -123,7 +100,6 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
           </div>
 
           <div className="space-y-5">
-            {/* Title */}
             <div>
               <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Task Title *</label>
               <input
@@ -133,7 +109,6 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
             </div>
-            {/* Description */}
             <div>
               <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Description</label>
               <textarea
@@ -145,7 +120,6 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
               />
             </div>
 
-            {/* Department & User Assignment */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Department *</label>
@@ -190,10 +164,7 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
               </div>
             </div>
 
-            {/* Priority, Date, Status, and Category Grid */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-5">
-              
-              {/* Priority */}
               <div className="flex flex-col">
                 <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Priority</label>
                 <Select.Root value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
@@ -216,7 +187,6 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
                 </Select.Root>
               </div>
 
-              {/* Due Date */}
               <div className="flex flex-col">
                 <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Due Date</label>
                 <input
@@ -227,7 +197,6 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
                 />
               </div>
 
-              {/* Status */}
               <div className="flex flex-col">
                 <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Status</label>
                 <Select.Root value={form.status || "to-do"} onValueChange={(v) => setForm({ ...form, status: v })}>
@@ -250,7 +219,6 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
                 </Select.Root>
               </div>
 
-              {/* Tab Category */}
               <div className="flex flex-col">
                 <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tab Category</label>
                 <Select.Root value={form.task_type} onValueChange={(v) => setForm({ ...form, task_type: v })}>
@@ -284,8 +252,8 @@ export default function CreateTaskModal({ open, onOpenChange, reload }) {
               disabled={loading || !form.title.trim() || !form.department_id}
               className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-bold rounded-xl shadow-md transition-all flex items-center gap-2"
             >
-              {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus size={18} />}
-              Create Task
+              {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
+              Save Changes
             </button>
           </div>
         </Dialog.Content>
