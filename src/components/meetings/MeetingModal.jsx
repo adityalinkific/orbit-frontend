@@ -4,6 +4,8 @@ import { X, Check, Copy } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { getAllUsersService } from "../../services/user.service"
+import { getAllProjects } from "../../services/project.service";
+
 
 const inputClass =
   "mt-1 w-full bg-[#f8fafc] rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none"
@@ -21,6 +23,21 @@ const MeetingModal = ({
   const [users, setUsers] = useState([])
   const [search, setSearch] = useState("")
   const [copied, setCopied] = useState(false)
+
+  const [projects, setProjects] = useState([]);
+
+useEffect(() => {
+  const fetchProjects = async () => {
+    try {
+      const data = await getAllProjects();
+      setProjects(data);
+    } catch (err) {
+      console.error("Failed to fetch projects", err);
+    }
+  };
+
+  if (open) fetchProjects();
+}, [open]);
 
 
   const updateField = (field, value) => {
@@ -240,17 +257,20 @@ const MeetingModal = ({
                   Project Association
                 </label>
 
-                <select
-                  value={form.project}
-                  onChange={(e) =>
-                    updateField("project", e.target.value)
-                  }
-                  className={inputClass}
-                >
-                  <option>Internal Ops</option>
-                  <option>Product</option>
-                  <option>Marketing</option>
-                </select>
+               <select
+                value={form.project_id}
+                onChange={(e) => updateField("project_id", Number(e.target.value))}
+                className={inputClass}
+              >
+                <option value="">Select Project</option>
+
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+
               </div>
 
               {/* EMAIL INVITE SWITCH */}
