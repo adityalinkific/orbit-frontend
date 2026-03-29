@@ -26,6 +26,15 @@ const formatDateStr = (d) => {
   return `${yyyy}-${mm}-${dd}`
 }
 
+const formatTime12h = (timeStr) => {
+  if (!timeStr) return "";
+  const [hh, mm] = timeStr.split(":");
+  const hour = parseInt(hh, 10);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const dispHour = hour % 12 || 12;
+  return `${dispHour}:${mm} ${ampm}`;
+};
+
 const Calendar = ({
   meetings,
   filters,
@@ -270,7 +279,7 @@ useEffect(() => {
                         <div className={`text-[10px] flex items-center gap-1 ${
                           isMeetingPast || isPastCell ? "text-gray-400" : "text-indigo-500"
                         }`}>
-                          <Clock className="w-[10px] h-[10px]" /> {m.startTime || m.time}
+                          <Clock className="w-[10px] h-[10px]" /> {formatTime12h(m.startTime || m.time)}
                         </div>
                       </div>
                     )
@@ -342,11 +351,15 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
         <div className="flex flex-1 relative overflow-hidden">
           {/* Hours column */}
           <div className="w-16 border-r border-gray-100 bg-gray-50/60 text-[11px] text-gray-400 sticky left-0 z-10">
-            {HOURS.map(h => (
-              <div key={h} className="h-16 flex items-start justify-center pt-1 border-b border-dashed border-gray-200/80">
-                {`${String(h).padStart(2, "0")}:00`}
-              </div>
-            ))}
+            {HOURS.map(h => {
+              const displayHour = h % 12 || 12;
+              const amPm = h >= 12 ? 'PM' : 'AM';
+              return (
+                <div key={h} className="h-16 flex items-start justify-center pt-1 border-b border-dashed border-gray-200/80">
+                  {`${displayHour}:00 ${amPm}`}
+                </div>
+              );
+            })}
           </div>
 
           {/* Days columns */}
@@ -377,8 +390,8 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
                   >
                     <div className="relative flex items-center">
 
-                      <div className="absolute -left-15 text-[11px] border rounded-md p-1 font-medium text-blue-500">
-                        {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      <div className="absolute -left-15 text-[11px] border rounded-md p-1 font-medium text-blue-500 bg-white z-50">
+                        {now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
                       </div>
 
                       <div className="absolute -left-1.5 w-3 h-3 rounded-full bg-blue-500"></div>
@@ -394,13 +407,12 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
                   const [startH, startM] = (m.startTime || "00:00").split(":").map(Number)
                   const [endH, endM] = (m.endTime || "00:00").split(":").map(Number)
 
-                  const startIndex = Math.max(0, startH - HOURS[0])
-
                   const startMinutes = startH * 60 + startM
                   const endMinutes = endH * 60 + endM
                   const durationHours = (endMinutes - startMinutes) / 60
 
-                  const meetingTop = startIndex * HOUR_HEIGHT
+                  const startOffsetHours = (startMinutes - HOURS[0] * 60) / 60
+                  const meetingTop = Math.max(0, startOffsetHours) * HOUR_HEIGHT
                   const meetingHeight = durationHours * HOUR_HEIGHT
 
 
@@ -428,7 +440,7 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
                       <div className="font-medium truncate">{m.title}</div>
                       <div className="mt-0.5 flex items-center gap-1 text-[10px] opacity-90">
                         <Clock className="w-[10px] h-[10px]" />
-                        {m.startTime || m.time}
+                        {formatTime12h(m.startTime || m.time)}
                       </div>
                     </div>
                   )
@@ -456,9 +468,9 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
             >
               <div className="absolute -top-3 -left-3 bg-blue-600 text-white text-xs px-3 py-1.5 rounded-br-xl flex items-center gap-1.5 shadow-lg whitespace-nowrap">
                 <Plus className="w-3.5 h-3.5" />
-                <span>{selection.startHour}:00</span>
+                <span>{selection.startHour % 12 || 12}:00 {selection.startHour >= 12 ? 'PM' : 'AM'}</span>
                 <span className="w-px h-3 bg-white/50 mx-1"></span>
-                <span>{selection.endHour}:00</span>
+                <span>{selection.endHour % 12 || 12}:00 {selection.endHour >= 12 ? 'PM' : 'AM'}</span>
               </div>
             </div>
           )}
