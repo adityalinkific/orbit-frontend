@@ -326,6 +326,24 @@ useEffect(() => {
                   </div>
                 )}
               </div>
+
+              {/* REPEAT WEEKDAYS */}
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-sm text-gray-700">
+                  Repeat on weekdays (Mon-Sat)
+                </span>
+
+                <Switch.Root
+                  checked={form.repeatWeekdays}
+                  onCheckedChange={(val) =>
+                    updateField("repeatWeekdays", val)
+                  }
+                  className="relative h-5 w-9 rounded-full bg-gray-200 data-[state=checked]:bg-blue-600 outline-none"
+                >
+                  <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white transition-transform data-[state=checked]:translate-x-4" />
+                </Switch.Root>
+              </div>
+
             </div>
 
             {/* RIGHT SIDE */}

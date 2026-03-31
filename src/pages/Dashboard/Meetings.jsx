@@ -47,18 +47,23 @@ const Meetings = () => {
 
       const data = await getAllMeetings();
 
-      // Transform API → UI format
+
       const formatted = data.map((m) => ({
         id: m.id,
         title: m.title,
         description: m.description,
-        date: m.start_time?.split("T")[0],
-        startTime: m.start_time?.split("T")[1]?.slice(0, 5),
-        endTime: m.end_time?.split("T")[1]?.slice(0, 5),
-        attendees: m.attendees || [],
+
+        date: m.meeting_date,
+
+        startTime: m.start_time?.split("T")[1]?.slice(0, 5) || "",
+        endTime: m.end_time?.split("T")[1]?.slice(0, 5) || "",
+
+        attendees: m.attendee_user_ids?.map((id) => ({ id })) || [],
+
         status: m.status,
         project_id: m.project_id,
       }));
+
 
       setMeetings(formatted);
     } catch (err) {
@@ -80,26 +85,35 @@ const Meetings = () => {
 
       if (form.startTime >= form.endTime) {
          toast.error("End time must be after start time");
+         setIsSubmitting(false);
         return;
       }
 
-     const payload = {
+const payload = {
   title: form.title,
   description: form.description,
+
+  meeting_date: form.date,
 
   start_time: new Date(`${form.date}T${form.startTime}`).toISOString(),
   end_time: new Date(`${form.date}T${form.endTime}`).toISOString(),
 
-  project_id: Number(form.project_id),
-
-  attendees: form.attendees?.map((u) => u.id),
-
-  organizer_id: form.organizer || null,
-
-  meeting_link: form.meetingLink || null,
+  project_id: Number(form.project_id) || 0,
 
   status: "Scheduled",
+
+  meeting_link: form.generateLink ? form.meetingLink : "",
+
+  organizer_id: form.organizer ? Number(form.organizer) : 0,
+
+  attendee_user_ids: form.attendees?.map((u) => Number(u.id)) || [],
+
+  attendee_emails:
+    form.attendees?.map((u) => u.email).filter(Boolean) || [],
+  generate_meeting_link: Boolean(form.generateLink),
 };
+
+
 
 
       console.log("✅ FINAL PAYLOAD", payload);
@@ -156,7 +170,12 @@ const Meetings = () => {
 
   /* ================= HANDLERS ================= */
   const handleMeetingClick = (meeting) => {
-    setForm(meeting);
+    setForm({
+    ...meeting,
+    organizer: meeting.organizer_id || "",
+    meetingLink: meeting.meeting_link || "",
+    generateLink: Boolean(meeting.meeting_link),
+  });
     setModalMode("edit");
     setShowModal(true);
   };

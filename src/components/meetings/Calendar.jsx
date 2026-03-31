@@ -105,7 +105,9 @@ useEffect(() => {
     const dayWidth = (rect.width - hourColWidth) / (viewMode === "day" ? 1 : 7)
 
     const x = e.clientX - rect.left - hourColWidth
-    const y = e.clientY - rect.top - 56 // subtract header height
+    const scrollTop = grid.scrollTop
+    const y = e.clientY - rect.top - 56 + scrollTop
+
 
     if (x < 0) return
 
@@ -143,7 +145,9 @@ useEffect(() => {
     if (!grid) return
 
     const rect = grid.getBoundingClientRect()
-    const y = e.clientY - rect.top - 56 // subtract header height
+    const scrollTop = grid.scrollTop
+    const y = e.clientY - rect.top - 56 + scrollTop
+
 
     let hourIndex = Math.floor(y / HOUR_HEIGHT)
     hourIndex = Math.max(0, Math.min(HOURS.length - 1, hourIndex))
@@ -313,7 +317,7 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
 
     return (
       <div 
-        ref={gridRef}
+        
         className="flex flex-col h-full relative"
         onMouseDown={handleGridMouseDown}
         onMouseMove={handleGridMouseMove}
@@ -348,7 +352,7 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
         </div>
 
         {/* Content area with proper positioning */}
-        <div className="flex flex-1 relative overflow-hidden">
+        <div ref={gridRef} className="flex flex-1 relative overflow-y-auto">
           {/* Hours column */}
           <div className="w-16 border-r border-gray-100 bg-gray-50/60 text-[11px] text-gray-400 sticky left-0 z-10">
             {HOURS.map(h => {
@@ -369,7 +373,11 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
             const dayMeetings = meetingsByDate[dateStr] || []
 
             return (
-              <div key={dateStr} className="flex-1 border-r border-gray-100 relative bg-white min-h-[704px]">
+              <div
+               key={dateStr} 
+                className="flex-1 border-r border-gray-100 relative bg-white"
+                style={{ minHeight: `${HOURS.length * HOUR_HEIGHT}px` }}
+              >
                 {/* Hour slots */}
                 {HOURS.map((h, idx) => (
                   <div key={h} className={`h-16 border-b border-dashed border-gray-100 relative ${isToday ? "bg-blue-50/10" : ""}`}>
@@ -491,10 +499,10 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
         </h2>
         <div className="flex items-center gap-3">
 
-  <FilterDropdown
+  {/* <FilterDropdown
     filters={filters}
     setFilters={setFilters}
-  />
+  /> */}
 
   <button
     onClick={onScheduleClick}
@@ -540,7 +548,7 @@ if (currentHour >= firstHour && currentHour <= lastHour) {
       </div>
 
       {/* Body */}
-      <div className="flex-1 min-h-[500px] ">
+      <div className="flex-1 min-h-[500px] overflow-hidden ">
         {viewMode === "month" ? renderMonthGrid() : renderTimeGrid()}
       </div>
     </div>
