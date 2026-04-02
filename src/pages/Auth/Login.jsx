@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-import { loginService } from "../../services/auth.service";
+import { loginService, meService } from "../../services/auth.service";
 import Toast from "../../components/feedback/Toast";
 import Loader from "../../components/common/Loader";
 import "./auth.css";
 import { GiDna1 } from "react-icons/gi";
 import { MdOutlineLink } from "react-icons/md";
 import { FaRocket } from "react-icons/fa";
+
 
 
 export default function Login() {
@@ -18,37 +19,62 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const [shake, setShake] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const submit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrors({});
+const submit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setErrors({});
 
-    try {
-      const res = await loginService(form);
+  try {
+    // ✅ Step 1: Login → get token
+    const res = await loginService(form);
 
-      login(res, rememberMe);
+    // ✅ Step 2: TEMPORARILY store token so interceptor can use it
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem("token", res.token);
 
-      navigate("/dashboard", { replace: true });
-    } catch (err) {
-      console.error("LOGIN ERROR 👉", err);
+    // ✅ Step 3: Now call /me (token is available ✅)
+    const meRes = await meService();
+    const user = meRes?.data?.data;
 
-      setToast("Invalid email or password");
-
-      setErrors({
-        email: true,
-        password: true,
-      });
-
-      setShake(true);
-      setTimeout(() => setShake(false), 450);
+    if (!user) {
+      throw new Error("Failed to fetch user");
     }
 
-    setLoading(false);
-  };
+    // ✅ Step 4: Save full auth state
+    login(
+      {
+        token: res.token,
+        user,
+      },
+      rememberMe
+    );
+
+    navigate("/dashboard", { replace: true });
+
+  } catch (err) {
+    console.error("LOGIN ERROR 👉", err);
+
+    setToast("Invalid email or password");
+
+    setErrors({
+      email: true,
+      password: true,
+    });
+
+    setShake(true);
+    setTimeout(() => setShake(false), 450);
+  }
+
+  setLoading(false);
+};
+
+
+
 
   return (
     <div className="orbit-auth fade-in">

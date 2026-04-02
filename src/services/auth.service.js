@@ -8,21 +8,13 @@ export const loginService = async (data) => {
   });
 
   if (res.data?.status === false || res.status >= 400) {
-    const msg =
-      res.data?.message?.message ||
-      res.data?.message ||
-      res.data?.error ||
-      "Login failed";
-    throw new Error(msg);
+    throw new Error(res.data?.message || "Login failed");
   }
 
   const token =
     res.data?.data?.access_token ||
     res.data?.access_token ||
-    res.data?.token ||
-    res.access_token ||
-    res.token ||
-    res.accessToken;
+    res.data?.token;
 
   if (!token) {
     throw new Error("No token found in login response");
@@ -30,14 +22,10 @@ export const loginService = async (data) => {
 
   return {
     token,
-    user:
-      res.data?.data?.user ||
-      res.data?.user || {
-        email: data.email,
-        role: res.data?.role || res.role || "super_admin",
-      },
+    user: null, // we will fetch from /me
   };
 };
+
 
 /* ---------------- REGISTER ---------------- */
 export const registerService = async (data) => {

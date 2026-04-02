@@ -66,15 +66,13 @@ const MeetingsSidebar = ({ meetings, onMeetingClick }) => {
           const now = new Date()
 
           const start = new Date(`${meeting.date}T${meeting.startTime}`)
-          const end = new Date(`${meeting.date}T${meeting.endTime}`)
 
-          const durationMinutes = Math.round((end - start) / (1000 * 60))
 
           let status = "scheduled"
 
-          if (now >= start && now <= end) {
+          if (now >= start) {
             status = "live"
-          } else if (now > end) {
+          } else {
             status = "completed"
           }
 
@@ -107,10 +105,7 @@ const MeetingsSidebar = ({ meetings, onMeetingClick }) => {
 
               <div className="flex items-center gap-1 text-[13px] text-gray-700 mt-2">
                 <Clock className="w-4 h-4" />
-                {meeting.startTime} – {meeting.endTime}
-                <span className="text-gray-700 ml-1">
-                  • {durationMinutes} min
-                </span>
+                {meeting.startTime}
               </div>
 
 

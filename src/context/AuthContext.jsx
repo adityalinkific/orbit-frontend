@@ -7,20 +7,27 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   // ✅ Load session from localStorage OR sessionStorage
-  useEffect(() => {
-    const token =
-      localStorage.getItem("token") || sessionStorage.getItem("token");
-    const storedUser =
-      localStorage.getItem("user") || sessionStorage.getItem("user");
+useEffect(() => {
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
 
-    console.log("BOOTSTRAP 👉", { token, storedUser });
+  const storedUser =
+    localStorage.getItem("user") || sessionStorage.getItem("user");
 
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+  console.log("BOOTSTRAP 👉", { token, storedUser });
+
+  if (token && storedUser) {
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+    } catch {
+      setUser(null);
     }
+  }
 
-    setLoading(false);
-  }, []);
+  setLoading(false);
+}, []);
+
 
   // ✅ Login handler with rememberMe
   const login = (data, rememberMe = false) => {

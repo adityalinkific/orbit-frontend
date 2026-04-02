@@ -15,7 +15,6 @@ export default function App() {
         console.error("Background health check failed:", error);
       }
     }, 5 * 60 * 1000);
-
     return () => clearInterval(intervalId);
   }, []);
 

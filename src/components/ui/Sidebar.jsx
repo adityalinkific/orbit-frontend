@@ -13,6 +13,7 @@ import { FiShield } from "react-icons/fi";
 import { VscRobot } from "react-icons/vsc";
 import { MdOutlineTaskAlt } from "react-icons/md";
 import { FaRegCalendar } from "react-icons/fa6";
+import { LayoutDashboard } from "lucide-react";
 const allMenus = {
   all_menu: [
     { name: "Task", icon: <MdOutlineTaskAlt size={20} />, path: "/task" },
@@ -37,13 +38,43 @@ const superAdminMenu = {
   ],
 };
 
+const adminMenu = {
+  admin: [
+    { name: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/dashboard" },
+    { name: "Task", icon: <MdOutlineTaskAlt size={20} />, path: "/task" },
+    { name: "People", icon: <HiOutlineUsers size={20} />, path: "/people" },
+    { name: "Departments", icon: <HiOutlineOfficeBuilding size={20} />, path: "/departments" },
+    { name: "Meetings", icon: <FaRegCalendar size={20} />, path: "/meetings" },
+    { name: "Settings", icon: <HiOutlineCog size={20} />, path: "/settings" },
+  ],
+};
+
 
 export default function Sidebar({ collapsed, setCollapsed }) {
   const location = useLocation();
   const { user } = useAuth();
 
-  const role = user?.role || "super_admin";
-  const menuItems = allMenus[role] || superAdminMenu[role];
+  const role =
+    (typeof user?.role === "string"
+      ? user.role
+      : user?.role?.role
+    )?.toLowerCase();
+
+    console.log("USER NAME:", user?.name);
+  console.log("USER ROLE:", user?.role);
+  console.log("ROLE STRING:", user?.role?.role);
+
+
+  let menuItems = [];
+
+if (role === "super_admin") {
+  menuItems = superAdminMenu.super_admin;
+} else if (role === "admin") {
+  menuItems = adminMenu.admin;
+} else {
+  menuItems = allMenus.all_menu; // fallback (or employee/user)
+}
+
 
   return (
     <aside
