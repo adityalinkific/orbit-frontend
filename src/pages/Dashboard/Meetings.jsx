@@ -66,17 +66,21 @@ const Meetings = () => {
         startTime: m.start_time?.slice(0, 5) || "",
          repeatType: m.repeat_type || "none",
 
-        // ✅ FIX: keep raw attendees
-        attendees: m.attendee_user_ids?.map((id) => ({ id })) || [],
+          participants:
+          m.attendees?.map((a) => ({
+            id: a.user?.id,
+            name: a.user?.name,
+            email: a.user?.email,
+            status: a.status,
+          })) || [],
 
-        // ✅ FIX: add participants fallback (UI expects this)
-        participants:
-          m.attendees_details || // if backend sends full user objects
-          m.attendee_user_ids?.map((id) => ({
-            id,
-            name: `User ${id}`, // fallback (replace later with real data)
-          })) ||
-          [],
+        // optional: keep raw
+        attendees:
+          m.attendees?.map((a) => ({
+            id: a.user?.id,
+            email: a.user?.email,
+            name: a.user?.name,
+          })) || [],
 
         meetingLink: m.meeting_link || "",
 

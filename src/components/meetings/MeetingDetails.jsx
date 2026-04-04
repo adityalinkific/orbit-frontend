@@ -322,7 +322,7 @@ const btnState = getButtonState();
                 <div key={p.id} className="flex justify-between items-center p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
                   <div className="flex gap-3 items-center">
                     <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-md shadow-blue-100">
-                      {p.name?.[0]?.toUpperCase() || "U"}
+                      {p.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-800">{p.name}</p>
