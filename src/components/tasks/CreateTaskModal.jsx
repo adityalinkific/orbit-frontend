@@ -46,8 +46,7 @@ setUsers(Array.isArray(userRes) ? userRes : userRes?.data || []);
 setProjects(Array.isArray(projectRes) ? projectRes : []);
 
 
-        // Validate that we are setting an array to state
-        // If userRes is { status: "...", data: [...] }, we need userRes.data
+
         const userList = Array.isArray(userRes) ? userRes : userRes?.data || [];
         
         setDepartments(Array.isArray(deptData) ? deptData : []);

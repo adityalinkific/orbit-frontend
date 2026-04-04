@@ -39,6 +39,11 @@ const Meetings = () => {
     endTime: "10:00",
     attendees: [],
     project_id: "", 
+    organizer: "",
+    generateLink: false,
+    meetingLink: "",
+    sendInvite: false,
+
   });
 
   
@@ -107,65 +112,57 @@ const Meetings = () => {
 
 
   /* ================= CREATE / UPDATE ================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+const handleSubmit = async (formData) => {
+  setIsSubmitting(true);
 
-    try {
+  try {
 
+    const payload = {
+      title: formData.title,
+      description: formData.description,
 
-      if (form.startTime >= form.endTime) {
-         setIsSubmitting(false);
-        return;
-      }
+      meeting_date: formData.date,
 
-const payload = {
-  title: form.title,
-  description: form.description,
+      start_time: formatTimeToUTCString(formData.startTime),
 
-  meeting_date: form.date, // already correct
+      project_id: Number(formData.project_id) || 0,
 
-  start_time: formatTimeToUTCString(form.startTime),
+      status: "Scheduled",
 
-  project_id: Number(form.project_id) || 0,
+      organizer_id: Number(formData.organizer) || 0,
 
-  status: "Scheduled",
+      attendee_user_ids:
+        formData.attendees?.map((u) => Number(u.id)) || [],
 
-  organizer_id: Number(form.organizer) || 0,
+      attendee_emails:
+        formData.attendees?.map((u) => u.email).filter(Boolean) || [],
 
-  attendee_user_ids: form.attendees?.map((u) => Number(u.id)) || [],
+      generate_meeting_link: Boolean(formData.generateLink),
 
-  attendee_emails:
-    form.attendees?.map((u) => u.email).filter(Boolean) || [],
+      meeting_link: formData.generateLink ? formData.meetingLink : "",
+    };
 
-  generate_meeting_link: Boolean(form.generateLink),
+    console.log("✅ FINAL PAYLOAD", payload);
 
-  meeting_link: form.generateLink ? form.meetingLink : "",
+    if (modalMode === "create") {
+      await createMeeting(payload);
+      toast.success("Meeting created 🎉");
+    } else {
+      await updateMeeting(formData.id, payload);
+      toast.success("Meeting updated ✨");
+    }
+
+    await fetchMeetings();
+    setShowModal(false);
+
+  } catch (err) {
+    console.error("❌ API ERROR:", err?.response?.data || err.message);
+    toast.error("Failed to save meeting ❌");
+  } finally {
+    setIsSubmitting(false);
+  }
 };
 
-
-
-
-
-      console.log("✅ FINAL PAYLOAD", payload);
-
-      if (modalMode === "create") {
-        await createMeeting(payload);
-
-      } else {
-        await updateMeeting(form.id, payload);
-      }
-
-      await fetchMeetings();
-      setShowModal(false);
-
-    } catch (err) {
-     console.error("❌ API ERROR:", err?.response?.data || err.message);
-      throw err;;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
 
   const handleDateClick = (date, timeRange) => {

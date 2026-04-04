@@ -66,42 +66,39 @@ useEffect(() => {
 const handleLocalSubmit = async (e) => {
   e.preventDefault();
 
-  try {
+  console.log("🚀 SUBMIT CLICKED", form);
 
-    // email logic (keep as is)
+  if (!onSubmit) {
+    console.error("❌ onSubmit not passed");
+    return;
+  }
+
+  try {
+    await onSubmit(form);
+    console.log("✅ onSubmit finished");
+
     if (form.sendInvite && form.attendees?.length > 0) {
       const emails = form.attendees.map((a) => a.email).filter(Boolean).join(",");
 
       if (emails) {
         const subject = encodeURIComponent(`Meeting Invite: ${form.title}`);
         const body = encodeURIComponent(
-          `You are invited to a meeting.\n\n` +
-          `Title: ${form.title || 'Untitled Meeting'}\n` +
-          `Date: ${form.date}\n` +
-          `Time: ${form.startTime}\n` +
-          (form.description ? `Agenda/Notes: ${form.description}\n` : "") +
-          (form.generateLink && form.meetingLink ? `\nJoin Meeting: ${form.meetingLink}\n` : "")
+          `Title: ${form.title}\nDate: ${form.date}\nTime: ${form.startTime}`
         );
 
         window.location.href = `mailto:${emails}?subject=${subject}&body=${body}`;
       }
     }
 
-    if (onSubmit) await onSubmit(e);
-
-    toast.success(
-      mode === "edit"
-        ? "Meeting updated successfully ✨"
-        : "Meeting created successfully 🎉",
-      { id: "modal-toast" }
-    );
+    onOpenChange(false);
 
   } catch (err) {
-    toast.error("Something went wrong ❌", {
-      id: "modal-toast",
-    });
+    console.error("❌ SUBMIT FAILED", err);
+    toast.error("Something went wrong ❌");
   }
 };
+
+
 
 
   /* ---------------- FETCH USERS ---------------- */
