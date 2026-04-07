@@ -61,10 +61,6 @@ const handleUpdateSubmit = async (formData) => {
   try {
     setIsSaving(true);
 
-    if (formData.startTime >= formData.endTime) {
-      toast.error("End time must be after start time");
-      return;
-    }
 
     const payload = {
       title: formData.title,
@@ -92,7 +88,7 @@ const handleUpdateSubmit = async (formData) => {
     };
 
     await onUpdate(payload);
-
+    toast.dismiss();
     toast.success("Meeting updated successfully ✨");
     setIsModalOpen(false);
   } catch (err) {
@@ -241,9 +237,6 @@ const btnState = getButtonState();
               <Clock size={18} className="text-blue-500" />
               <span className="text-sm font-medium">
                 {meeting.startTime} 
-                <span className="text-xs text-gray-400 ml-1">
-                  ({meeting.repeatType !== "none" ? "2h window" : "1h duration"})
-                </span>
 
               </span>
             </div>

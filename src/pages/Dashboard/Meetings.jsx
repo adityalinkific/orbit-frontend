@@ -12,11 +12,14 @@ import {
   updateMeeting,
   deleteMeeting,
 } from "../../services/meeting.service";
+import MeetingsSidebarSkeleton from "../../components/skeletons/MeetingsSidebarSkeleton";
 
 const Meetings = () => {
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalMode, setModalMode] = useState("create");
+  const [loading, setLoading] = useState(false);
+
 
   const [meetings, setMeetings] = useState([]);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
@@ -51,7 +54,7 @@ const Meetings = () => {
   /* ================= FETCH ================= */
   const fetchMeetings = async () => {
     try {
-
+      setLoading(true);
       const data = await getAllMeetings();
       console.log(data)
 
@@ -91,6 +94,7 @@ const Meetings = () => {
 
 
       setMeetings(formatted);
+      setLoading(false);
     } catch (err) {
       console.error("Failed to fetch meetings", err);
     }
@@ -282,10 +286,14 @@ const handleSubmit = async (formData) => {
         />
       ) : (
         <div className="flex h-full">
-          <MeetingsSidebar
-            meetings={meetings}
-            onMeetingClick={(m) => setSelectedMeeting(m)}
-          />
+          {loading ? (
+            <MeetingsSidebarSkeleton />
+          ) : (
+                    <MeetingsSidebar
+                      meetings={meetings}
+                      onMeetingClick={(m) => setSelectedMeeting(m)}
+                    />
+          )}
 
           <div className="flex-1 p-6 flex flex-col">
             <Calendar

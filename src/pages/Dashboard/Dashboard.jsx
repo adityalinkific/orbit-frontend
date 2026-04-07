@@ -10,6 +10,8 @@ import { getAllMeetings } from "../../services/meeting.service";
 import { getAllUsersService } from "../../services/user.service";
 
 import useAuth from "../../hooks/useAuth";
+import { Calendar } from "lucide-react";
+import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -19,6 +21,11 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [meetings, setMeetings] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+
+
 
   useEffect(() => {
     const load = async () => {
@@ -43,11 +50,15 @@ export default function Dashboard() {
         setMeetings(meetRes || []);
       } catch (err) {
         console.error(err);
+      } finally{
+        setLoading(false);
       }
     };
 
     load();
   }, []);
+
+  if (loading) return <DashboardSkeleton />;
 
   /* ================= METRICS ================= */
   const totalProjects = projects.length;
@@ -153,10 +164,10 @@ const getTaskStatus = (dueDate) => {
 
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
+    <div className="p-6 bg-[#f4f7fb] min-h-screen">
       {/* HEADER */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-slate-800">
+        <h1 className="text-2xl font-medium text-slate-900">
           Executive Overview
         </h1>
         <p className="text-sm text-slate-500">
@@ -171,8 +182,8 @@ const getTaskStatus = (dueDate) => {
         <StatCard title="Ongoing Projects" value={ongoingProjects} />
 
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-slate-500">Completion Rate</p>
-          <h2 className="text-lg font-semibold mt-1">
+          <p className="text-xs font-semibold text-slate-500">Completion Rate</p>
+          <h2 className="text-2xl font-semibold mt-1">
             {completionRate}%
           </h2>
           <div className="w-full h-2 bg-slate-200 rounded-full mt-2">
@@ -189,10 +200,10 @@ const getTaskStatus = (dueDate) => {
         {/* PROJECT PROGRESS */}
         <div className="col-span-2 bg-white rounded-xl p-5 shadow-sm">
           <div className="flex justify-between mb-4">
-            <h3 className="font-semibold text-slate-700">
+            <h3 className="font-medium text-slate-900">
               Project Progress
             </h3>
-            <span className="text-sm text-blue-500 cursor-pointer">
+            <span className="text-xs font-medium text-blue-500 cursor-pointer">
               Full Analytics
             </span>
           </div>
@@ -202,9 +213,9 @@ const getTaskStatus = (dueDate) => {
               p.progress || Math.floor(Math.random() * 100);
 
             return (
-              <div key={i} className="mb-4">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-xs">
+              <div key={i} className="mb-6">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className={`bg-blue-50 text-white ${getColor(i)} opacity-[0.9] font-medium  px-2 py-0.5 rounded-sm text-xs`}>
                     {p.name || "PROJECT"}
                   </span>
                   <span>{percent}%</span>
@@ -225,9 +236,12 @@ const getTaskStatus = (dueDate) => {
         {/* MEETINGS */}
         <div className="bg-white rounded-xl p-5 shadow-sm">
           <div className="flex justify-between mb-4">
-            <h3 className="font-semibold text-slate-700">
+            <h3 className="font-medium text-slate-900">
               Meetings Overview
             </h3>
+            <span className="text-xs font-medium ">
+              <Calendar/>
+            </span>
           </div>
 
           {meetings.slice(0, 4).map((m, i) => {
@@ -249,12 +263,12 @@ const getTaskStatus = (dueDate) => {
                 </div>
 
                 <div className="flex flex-col items-end gap-1">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-sm font-semibold text-slate-900">
                     {formatTime(m.start_time)}
                   </span>
 
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                    className={`text-[10px] px-2 py-0.5 rounded-sm font-medium ${
                       status === "live"
                         ? "bg-green-100 text-green-700"
                         : status === "completed"
@@ -284,10 +298,10 @@ const getTaskStatus = (dueDate) => {
         <div className="col-span-2 bg-white rounded-xl p-5 shadow-sm">
           {/* HEADER */}
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-slate-800">
+            <h3 className="font-medium text-slate-900">
               Deadline Approaching
             </h3>
-            <button className="text-sm cursor-pointer text-blue-500 hover:underline">
+            <button className="text-xs font-medium text-blue-500 cursor-pointer">
               View All
             </button>
           </div>
@@ -376,8 +390,8 @@ const getTaskStatus = (dueDate) => {
 function StatCard({ title, value }) {
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm">
-      <p className="text-xs text-slate-500">{title}</p>
-      <h2 className="text-lg font-semibold mt-1">{value}</h2>
+      <p className="text-xs font-semibold  text-slate-500">{title}</p>
+      <h2 className="text-2xl font-semibold mt-1">{value}</h2>
     </div>
   );
 }

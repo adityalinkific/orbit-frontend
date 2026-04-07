@@ -2,7 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog"
 import * as Switch from "@radix-ui/react-switch"
 import { X, Check, Copy } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
-import { Toaster, toast } from "react-hot-toast";
+import {  toast } from "react-hot-toast";
 
 import { getAllUsersService } from "../../services/user.service"
 import { getAllProjects } from "../../services/project.service";
@@ -173,22 +173,6 @@ const handleLocalSubmit = async (e) => {
           -translate-x-1/2 -translate-y-1/2 
           rounded-xl bg-white shadow-2xl outline-none 
           max-h-[90vh] flex flex-col">
-            <Toaster
-              position="top-center"
-              containerStyle={{
-                position: "absolute",
-                top: 16,
-                left: 0,
-                right: 0,
-              }}
-              toastOptions={{
-                style: {
-                  fontSize: "12px",
-                  borderRadius: "8px",
-                  padding: "8px 12px",
-                },
-              }}
-            />
           {/* HEADER */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-300">
             <div>
