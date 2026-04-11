@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const apiUrl = import.meta.env.VITE_API_URL || "https://orbit-dp09.onrender.com";
+const apiUrl = import.meta.env.VITE_API_URL || "https://vacation-anyhow-preplan.ngrok-free.dev/";
 const API_BASE = apiUrl.endsWith("/api/v1") ? apiUrl : `${apiUrl}/api/v1`;
 const api = axios.create({
   baseURL: API_BASE,

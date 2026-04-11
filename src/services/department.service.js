@@ -2,7 +2,7 @@ import api from "./api"
 import axios from "axios";
 /* ---------------- GET ALL DEPARTMENTS ---------------- */
 export const getDepartments = async () => {
-  const res = await api.get("/departments");
+  const res = await api.get("/departments/");
 
   // backend returns { status, message, data }
   if (!Array.isArray(res.data.data)) {
@@ -14,7 +14,7 @@ export const getDepartments = async () => {
 
 /* ---------------- CREATE DEPARTMENT ---------------- */
 export const createDepartment = async (payload) => {
-  const res = await api.post("/departments", payload);
+  const res = await api.post("/departments/", payload);
 
   if (!res.data?.data) {
     throw new Error("Response validation failed");

@@ -1,6 +1,8 @@
 import { Funnel, Plus, X, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAllProjects } from "../../services/project.service";
+import { getAllProjects,  updateProjectService, createProjectService } from "../../services/project.service";
+import { getDepartments } from "../../services/department.service";
+
 import ProjectCard from "../../components/projects/ProjectCard";
 
 export default function Projects() {
@@ -9,6 +11,68 @@ export default function Projects() {
 
    const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [departments, setDepartments] = useState([]);
+
+  const [editingProject, setEditingProject] = useState(null);
+
+  const [formData, setFormData] = useState({
+  name: "",
+  description: "",
+  department_id: "",
+});
+
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+
+const handleEdit = (project) => {
+  setEditingProject(project);
+  setFormData({
+    name: project.name,
+    description: project.description,
+    department_id: project.department_id || "",
+  });
+  setOpenModal(true);
+};
+
+
+const handleSubmit = async () => {
+  try {
+    if (!formData.name || !formData.department_id) {
+      alert("Name & Department required");
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      department_id: Number(formData.department_id),
+    };
+
+    if (editingProject) {
+      await updateProjectService(editingProject.id, payload);
+      alert("Project updated successfully");
+    } else {
+      await createProjectService(payload);
+      alert("Project created successfully");
+    }
+
+    setOpenModal(false);
+    setFormData({ name: "", description: "", department_id: "" });
+    setEditingProject(null);
+
+    fetchProjects();
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
+  }
+};
+
+
+
 
   const fetchProjects = async () => {
     try {
@@ -19,7 +83,7 @@ export default function Projects() {
         id: p.id,
         name: p.name,
         description: p.description,
-        department: "ENGINEERING", // temp (replace later)
+        department_id: p.department_id, 
         status: "active", // dynamic later
         progress: Math.floor(Math.random() * 100), // temp
         owner: "John Doe", // replace later
@@ -35,9 +99,22 @@ export default function Projects() {
     }
   };
 
+    const fetchDepartments = async () => {
+  try {
+    const data = await getDepartments();
+    setDepartments(data);
+  } catch (err) {
+    console.error("Failed to fetch departments", err);
+  }
+};
+
   useEffect(() => {
     fetchProjects();
+    fetchDepartments();
   }, []);
+
+
+
 
   return (
     <div className="relative z-20 min-h-screen bg-gray-50 p-8">
@@ -144,11 +221,14 @@ export default function Projects() {
                   PROJECT NAME
                 </label>
                 <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   type="text"
                   placeholder="e.g. Project Quantum Leap"
-                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                 />
-              </div>
+                              </div>
 
               {/* ROW */}
               <div className="grid grid-cols-2 gap-4">
@@ -157,9 +237,21 @@ export default function Projects() {
                   <label className="text-xs text-gray-500 font-medium">
                     DEPARTMENT
                   </label>
-                  <select className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                    <option>Select Dept</option>
+                  <select
+                    name="department_id"
+                    value={formData.department_id}
+                    onChange={handleChange}
+                    className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  >
+                    <option value="">Select Dept</option>
+
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
+                    ))}
                   </select>
+
                 </div>
 
                 <div>
@@ -204,10 +296,14 @@ export default function Projects() {
                   DESCRIPTION
                 </label>
                 <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
                   rows={3}
                   placeholder="Brief summary..."
                   className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                 />
+
               </div>
             </div>
 
@@ -220,9 +316,13 @@ export default function Projects() {
                 Cancel
               </button>
 
-              <button className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700">
-                Create Project
+              <button
+                onClick={handleSubmit}
+                className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                {editingProject ? "Update Project" : "Create Project"}
               </button>
+
             </div>
           </div>
         </div>

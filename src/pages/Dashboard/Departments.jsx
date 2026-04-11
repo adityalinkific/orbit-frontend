@@ -100,7 +100,7 @@ if (!form.name.trim()) {
     description: form.description?.trim() || "",
     department_head_id: typeof form.department_head_id === "number"
       ? form.department_head_id
-      : null,
+      : 0,
     is_active: form.is_active, 
   }
 
