@@ -30,7 +30,30 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
 
+const getProjectStats = (projects, tasks) => {
+  return projects.map((project) => {
+    const projectTasks = tasks.filter(
+      (t) => t.project_id === project.id
+    );
 
+    const total = projectTasks.length;
+
+    const completed = projectTasks.filter(
+      (t) => t.is_completed === true
+    ).length;
+
+    const progress =
+      total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    return {
+      ...project,
+      totalTasks: total,
+      completedTasks: completed,
+      progress,
+      status: project.is_completed ? "completed" : "active",
+    };
+  });
+};
 
   useEffect(() => {
     const load = async () => {
@@ -53,6 +76,13 @@ export default function Dashboard() {
         setProjects(projRes || []);
         setTasks(taskRes?.data || []);
         setMeetings(meetRes || []);
+
+        const enrichedProjects = getProjectStats(
+  projRes || [],
+  taskRes?.data || []
+);
+
+setProjects(enrichedProjects);
       } catch (err) {
         console.error(err);
       } finally{
@@ -75,8 +105,16 @@ export default function Dashboard() {
   const totalProjects = projects.length;
   const totalEmployees = users.length;
   const completedProjects = projects.filter(
-    (p) => p.status === "completed"
+    (p) => p.is_completed === true
   ).length;
+
+  const getHealth = (p) => {
+  if (p.overdue > 3) return "At Risk";
+  if (p.progress > 70) return "On Track";
+  return "Needs Attention";
+};
+
+
 
   const ongoingProjects = totalProjects - completedProjects;
 
@@ -104,8 +142,23 @@ export default function Dashboard() {
 const getColor = (i) => colors[i % colors.length];
 const formatTime = (time) => {
   if (!time) return "--";
-  return time.slice(0, 5);
+
+  const [hour, minute] = time.split(":").map(Number);
+
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const formattedHour = hour % 12 || 12;
+
+  return `${formattedHour}:${minute.toString().padStart(2, "0")} ${ampm}`;
 };
+
+
+
+const getProgressColor = (percent) => {
+  if (percent < 30) return "bg-red-500";
+  if (percent < 70) return "bg-yellow-500";
+  return "bg-green-500";
+};
+
 
 const getMeetingStatus = (m) => {
   try {
@@ -139,6 +192,7 @@ const getMeetingStatus = (m) => {
     return "scheduled";
   }
 };
+
 
 const formatDate = (date) => {
   if (!date) return "--";
@@ -224,23 +278,27 @@ const getTaskStatus = (dueDate) => {
           </div>
 
           {projects.slice(0, 5).map((p, i) => {
-            const percent =
-              p.progress || Math.floor(Math.random() * 100);
+           const percent = p.progress || 0;
 
             return (
               <div key={i} className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
-                  <span className={`bg-blue-50 text-white ${getColor(i)} opacity-[0.9] font-medium  px-2 py-0.5 rounded-sm text-xs`}>
-                    {p.name || "PROJECT"}
-                  </span>
-                  <span>{percent}%</span>
-                </div>
+  <span className={`bg-blue-50 text-white ${getColor(i)} px-2 py-0.5 rounded-sm text-xs`}>
+    {p.name}
+  </span>
+
+  <span className="text-xs text-gray-500">
+    {p.completedTasks}/{p.totalTasks} tasks
+  </span>
+</div>
+
 
                 <div className="w-full h-2 bg-slate-200 rounded-full">
                   <div
-                    className={`h-2 rounded-full ${getColor(i)}`}
+                    className={`h-2 rounded-full ${getProgressColor(percent)}`}
                     style={{ width: `${percent}%` }}
                   />
+
 
                 </div>
               </div>
