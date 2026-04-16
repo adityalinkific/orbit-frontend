@@ -11,20 +11,24 @@ const api = axios.create({
 });
 
 /* ---------------- REQUEST INTERCEPTOR ---------------- */
-api.interceptors.request.use(
-  (config) => {
-    const token =
-      localStorage.getItem("token") ||
-      sessionStorage.getItem("token");
+api.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token");
 
+  console.log("🔥 TOKEN FROM STORAGE:", token);
+
+  if (token) {
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  config.headers["x-access-token"] = token;
+}
+    console.log("🚀 FINAL HEADER:", config.headers.Authorization);
+  }
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  return config;
+});
+
+
 
 /* ---------------- RESPONSE INTERCEPTOR ---------------- */
 api.interceptors.response.use(
@@ -54,9 +58,6 @@ export const request = async (url, options = {}) => {
       headers,
     });
   } catch (error) {
-    if (error.response) {
-      return error.response;
-    }
     throw error;
   }
 };

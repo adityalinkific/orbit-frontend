@@ -22,70 +22,77 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const submit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrors({});
+const submit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setErrors({});
 
-    try {
-      const res = await loginService(form);
+  try {
+    // ✅ STEP 1: Call login API
+    const res = await loginService(form);
 
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem("token", res.token);
+    // ✅ STEP 2: Get token
+    const rawToken = res.token;
 
-      // Force axios to use latest token immediately
-      api.defaults.headers.common["Authorization"] = `Bearer ${res.token}`;
+    // ✅ STEP 3: Clean token (avoid "Bearer Bearer")
+    const cleanToken = rawToken.startsWith("Bearer ")
+      ? rawToken.split(" ")[1]
+      : rawToken;
 
-      const meRes = await meService();
+    // ✅ STEP 4: Store token
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem("token", cleanToken);
 
-      const user = meRes?.data?.data;
+    // ✅ STEP 5: (optional) set axios default header
+    api.defaults.headers.common["Authorization"] = `Bearer ${cleanToken}`;
 
-      if (!user) {
-        throw new Error("Failed to fetch user");
-      }
+    // ✅ STEP 6: Fetch user
+    const meRes = await meService();
+    const user = meRes?.data?.data;
 
-      login(
-        {
-          token: res.token,
-          user,
-        },
-        rememberMe
-      );
-
-      navigate("/dashboard", { replace: true });
-    } catch (err) {
-      console.error("LOGIN ERROR 👉", err);
-
-      const msg = (err.message || "").toLowerCase();
-      let toastMsg = "Invalid email or password";
-      let emailErr = true;
-      let passErr = true;
-
-      if (msg.includes("password")) {
-        toastMsg = "Invalid Password";
-        emailErr = false;
-        passErr = true;
-      } else if (msg.includes("email") || msg.includes("user")) {
-        toastMsg = "Invalid Email Address and Password";
-        emailErr = true;
-        passErr = true;
-      } else {
-        toastMsg = err.message || "Invalid Email Address and Password";
-      }
-
-      setToast(toastMsg);
-
-      setErrors({
-        email: emailErr,
-        password: passErr,
-      });
-
-      setShake(true);
-      setTimeout(() => setShake(false), 450);
+    if (!user) {
+      throw new Error("Failed to fetch user");
     }
 
-    setLoading(false);
-  };
+    // ✅ STEP 7: Save auth state
+    login(
+      {
+        token: cleanToken,
+        user,
+      },
+      rememberMe
+    );
+
+    navigate("/dashboard", { replace: true });
+
+  } catch (err) {
+    console.error("LOGIN ERROR 👉", err);
+
+    const msg = (err.message || "").toLowerCase();
+    let toastMsg = "Invalid email or password";
+    let emailErr = true;
+    let passErr = true;
+
+    if (msg.includes("password")) {
+      toastMsg = "Invalid Password";
+      emailErr = false;
+      passErr = true;
+    } else if (msg.includes("email") || msg.includes("user")) {
+      toastMsg = "Invalid Email Address and Password";
+    } else {
+      toastMsg = err.message || "Invalid Email Address and Password";
+    }
+
+    setToast(toastMsg);
+    setErrors({ email: emailErr, password: passErr });
+
+    setShake(true);
+    setTimeout(() => setShake(false), 450);
+  }
+
+  setLoading(false);
+};
+
 
   return (
     <div className="w-full flex flex-col lg:flex-row min-h-screen font-sans animate-in fade-in duration-500">
