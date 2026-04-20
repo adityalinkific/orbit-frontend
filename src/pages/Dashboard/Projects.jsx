@@ -1,6 +1,6 @@
 import { Funnel, Plus, X, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAllProjects,  updateProjectService, createProjectService } from "../../services/project.service";
+import { getAllProjects,  updateProjectService, createProjectService, getDashboardMetrics } from "../../services/project.service";
 import { getDepartments } from "../../services/department.service";
 
 import ProjectCard from "../../components/projects/ProjectCard";
@@ -8,6 +8,7 @@ import ProjectCard from "../../components/projects/ProjectCard";
 export default function Projects() {
   const [tab, setTab] = useState("active");
   const [openModal, setOpenModal] = useState(false);
+  const [metrics, setMetrics] = useState(null);
 
    const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,30 +75,44 @@ const handleSubmit = async () => {
 
 
 
-  const fetchProjects = async () => {
-    try {
-      const data = await getAllProjects();
+    const fetchProjects = async () => {
+      try {
+        const data = await getAllProjects();
 
-      // 🔥 transform backend → UI
-      const formatted = data.map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        department_id: p.department_id, 
-        status: "active", // dynamic later
-        progress: Math.floor(Math.random() * 100), // temp
-        owner: "John Doe", // replace later
-        tasks: Math.floor(Math.random() * 50),
-        overdue: Math.floor(Math.random() * 5),
-      }));
+        const formatted = data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          department_id: p.department_id,
 
-      setProjects(formatted);
-    } catch (err) {
-      console.error("Failed to fetch projects", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+          
+          progress: p.progress || 0,
+          overdue: p.overdue_tasks_count || 0,
+          owner: p.project_lead || "Unassigned",
+
+          
+          status: getProjectStatus(p),
+          department: getDepartmentName(p.department_id),
+          tasks: 0, // until backend gives total tasks
+        }));
+
+        setProjects(formatted);
+      } catch (err) {
+        console.error("Failed to fetch projects", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    const formatTimeline = (start, end) => {
+  if (!start || !end) return "N/A";
+
+  const s = new Date(start).toLocaleDateString();
+  const e = new Date(end).toLocaleDateString();
+
+  return `${s} — ${e}`;
+};
+
 
     const fetchDepartments = async () => {
   try {
@@ -108,10 +123,40 @@ const handleSubmit = async () => {
   }
 };
 
-  useEffect(() => {
+  const fetchMetrics = async () => {
+  try {
+    const data = await getDashboardMetrics();
+    setMetrics(data);
+  } catch (err) {
+    console.error("Failed to fetch metrics", err);
+  }
+};
+
+const getProjectStatus = (p) => {
+  if (p.is_completed) return "completed";
+
+  if (p.project_health === "at_risk") return "risk";
+  if (p.project_health === "delayed") return "delayed";
+
+  return "active";
+};
+
+const getDepartmentName = (id) => {
+  const dept = departments.find((d) => d.id === id);
+  return dept?.name || "GENERAL";
+};
+
+
+useEffect(() => {
+  fetchDepartments();
+  fetchMetrics();
+}, []);
+
+useEffect(() => {
+  if (departments.length) {
     fetchProjects();
-    fetchDepartments();
-  }, []);
+  }
+}, [departments]);
 
 
 
@@ -144,7 +189,7 @@ const handleSubmit = async () => {
 
           <button
             onClick={() => setTab("archived")}
-            className={`px-4 py-1.5 text-sm rounded-sm font-medium ${
+            className={`px-4 py-1.5 text-sm rounded-sm font-medium cursor-pointer ${
               tab === "archived"
                 ? "bg-white text-blue-500"
                 : "text-gray-600"
@@ -161,7 +206,7 @@ const handleSubmit = async () => {
 
         <button
           onClick={() => setOpenModal(true)}
-          className="flex gap-1 text-sm items-center px-4 py-1.5 font-medium rounded-sm bg-[#005fff] text-white"
+          className="flex gap-1 text-sm items-center px-4 py-1.5 font-medium rounded-sm bg-[#005fff] text-white cursor-pointer"
         >
           <Plus size={16} />
           Create Project
@@ -180,7 +225,7 @@ const handleSubmit = async () => {
       {/* ADD NEW CARD */}
       <div
         onClick={() => setOpenModal(true)}
-        className="border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-100 cursor-pointer transition"
+        className="flex flex-col items-center gap-3 cursor-pointer bg-white rounded-xl border border-gray-200 p-5 text-[#64748b] shadow-sm hover:shadow-md transition"
       >
         <div className="text-3xl mb-2">+</div>
         <p className="font-medium">Start New Project</p>
@@ -189,6 +234,47 @@ const handleSubmit = async () => {
     </>
   )}
 </div>
+
+{/* METRICS CARDS */}
+<div className=" px-6 mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+  {metrics ? (
+    <>
+      {/* Total Budget */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Budget</p>
+        <h2 className="text-2xl font-bold text-slate-900 mt-1">$1.24M</h2>
+        <p className="text-xs text-green-600 font-medium mt-1 flex items-center">
+          <span className="mr-1">↑</span> 12% vs last quarter
+        </p>
+      </div>
+
+      {/* Active Projects */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Projects</p>
+        <h2 className="text-2xl font-bold text-slate-900 mt-1">{metrics.active_projects_count}</h2>
+        <p className="text-xs text-gray-400 mt-1">Across 6 Departments</p>
+      </div>
+
+      {/* Avg Completion */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Avg. Completion</p>
+        <h2 className="text-2xl font-bold text-slate-900 mt-1">{metrics.average_completion_percentage}%</h2>
+        <p className="text-xs text-gray-400 mt-1">Historical velocity: 2.4/wk</p>
+      </div>
+
+      {/* Risk Alerts */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Risk Alerts</p>
+        <h2 className="text-2xl font-bold text-red-500 mt-1">{metrics.risk_alerts_count}</h2>
+        <p className="text-xs text-gray-400 mt-1">Requires attention</p>
+      </div>
+    </>
+  ) : (
+    <p className="px-6 text-sm text-gray-500">Loading metrics...</p>
+  )}
+</div>
+
+
 
 
       {/* MODAL */}

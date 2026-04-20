@@ -12,33 +12,53 @@ export default function ProjectDetails() {
     fetchProject();
   }, [id]);
 
-  const fetchProject = async () => {
-    try {
-      const data = await getProjectById(id);
-      setProject({
-        ...data,
-        name: data.name || "Quantum Core Upgrade",
-        completion: 68,
-        blocked: 2,
-        spillover: 0,
-        status: "Delayed",
-        category: "ENGINEERING",
-        lead: "Marcus Chen",
-        timeline: "2024-03-01 — 2024-05-15",
-        description: "Migrating legacy infrastructure to the new distributed ledger system for enhanced security and scalability.",
-        tasks: [
-          { name: "Audit Legacy UI Borders", date: "Oct 15", priority: "MEDIUM" },
-          { name: "Define North Star Strategy", date: "Oct 20", priority: "MEDIUM" },
-        ],
-        team: [
-          { name: "Marcus Chen", role: "Manager", dept: "ENGINEERING" },
-          { name: "Elena Rodriguez", role: "Contributor", dept: "ENGINEERING" },
-        ],
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const fetchProject = async () => {
+  try {
+    const data = await getProjectById(id);
+
+    setProject({
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      department_id: data.department_id,
+
+      // ✅ REAL DATA
+      completion: data.progress || 0,
+      blocked: data.overdue_tasks_count || 0,
+      status: getProjectStatus(data),
+      lead: data.project_lead || "Unassigned",
+
+      // ✅ DERIVED
+      category: `Dept ${data.department_id}`, // improve below
+      timeline: formatTimeline(data.created_at, data.updated_at),
+
+      // ⛔ until backend APIs exist
+      spillover: 0,
+      tasks: [],
+      team: [],
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const getProjectStatus = (p) => {
+  if (p.is_completed) return "completed";
+  if (p.project_health === "at_risk") return "risk";
+  if (p.project_health === "delayed") return "delayed";
+  return "active";
+};
+
+const formatTimeline = (start, end) => {
+  if (!start || !end) return "N/A";
+
+  const s = new Date(start).toLocaleDateString();
+  const e = new Date(end).toLocaleDateString();
+
+  return `${s} — ${e}`;
+};
+
+
 
   if (!project) return <p className="p-6 text-gray-500">Loading project data...</p>;
 
@@ -103,12 +123,36 @@ export default function ProjectDetails() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-              <span className="bg-red-50 text-red-500 text-[10px] font-bold px-2 py-1 rounded uppercase">Delayed</span>
+              <span
+                className={`text-[10px] font-bold px-2 py-1 rounded uppercase
+                  ${project.status === "delayed" ? "bg-red-50 text-red-500" :
+                    project.status === "risk" ? "bg-orange-50 text-orange-500" :
+                    project.status === "completed" ? "bg-green-50 text-green-500" :
+                    "bg-blue-50 text-blue-500"}
+                `}
+              >
+                {project.status}
+              </span>
+
             </div>
             
             <div className="flex items-center gap-4 text-xs font-medium text-gray-400">
                <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600 tracking-wide uppercase">{project.category}</span>
-               <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> ACTIVE</div>
+               <div className="flex items-center gap-1">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    project.status === "completed"
+                      ? "bg-green-500"
+                      : project.status === "delayed"
+                      ? "bg-red-500"
+                      : project.status === "risk"
+                      ? "bg-orange-500"
+                      : "bg-blue-500"
+                  }`}
+                />
+                {project.status.toUpperCase()}
+              </div>
+
                <div>Lead: <span className="text-gray-600">{project.lead}</span></div>
                <div>🗓️ {project.timeline} <span className="ml-2 text-red-500 uppercase font-bold">Passed</span></div>
             </div>

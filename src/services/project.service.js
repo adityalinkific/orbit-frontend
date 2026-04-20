@@ -25,3 +25,9 @@ export const getProjectById = async (id) => {
   const res = await api.get(`/projects/project-detail/${id}`);
   return res.data?.data;
 };
+
+export const getDashboardMetrics = async () => {
+  const res = await api.get("/projects/dashboard-metrics");
+  return res.data?.data;
+};
+
