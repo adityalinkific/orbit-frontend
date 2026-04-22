@@ -6,12 +6,16 @@ import { getDepartments } from "../../services/department.service";
 import ProjectCard from "../../components/projects/ProjectCard";
 import { getAllUsersService } from "../../services/user.service";
 import ProjectModal from "../../components/projects/ProjectModal";
+import { toast } from "react-hot-toast";
+
 
 export default function Projects() {
   const [tab, setTab] = useState("active");
   const [openModal, setOpenModal] = useState(false);
   const [metrics, setMetrics] = useState(null);
   const [users, setUsers] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
    const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,12 +63,13 @@ const handleChange = (e) => {
 
 
   const handleSubmit = async () => {
+     if (isSubmitting) return;
     try {
       if (!formData.name || !formData.department_id || !formData.owner_id) {
-        alert("Name, Department & Owner required");
+        toast.error("Name, Department & Owner required");
         return;
       }
-
+       setIsSubmitting(true);
       const payload = {
         name: formData.name,
         description: formData.description,
@@ -81,10 +86,10 @@ const handleChange = (e) => {
 
       if (editingProject) {
         await updateProjectService(editingProject.id, payload);
-        alert("Project updated successfully");
+        toast.success("Project updated successfully");
       } else {
         await createProjectService(payload);
-        alert("Project created successfully");
+        toast.success("Project created successfully");
       }
 
       setOpenModal(false);
@@ -101,8 +106,10 @@ const handleChange = (e) => {
       fetchProjects();
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
-    }
+      toast.error("Something went wrong");
+    } finally {
+    setIsSubmitting(false); 
+  }
   };
 
 
@@ -168,6 +175,23 @@ const fetchUsers = async () => {
     setUsers([]); // fallback safety
   }
 };
+
+const handleToggleStatus = async (projectId, newStatus) => {
+  try {
+    // call API here
+    await updateProjectService(projectId, { status: newStatus });
+
+    // update UI
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === projectId ? { ...p, status: newStatus } : p
+      )
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 
 
 
@@ -280,7 +304,7 @@ useEffect(() => {
   ) : (
     <>
       {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} />
+        <ProjectCard key={project.id} project={project}  onToggleStatus={handleToggleStatus}/>
       ))}
 
       {/* ADD NEW CARD */}
@@ -351,6 +375,7 @@ useEffect(() => {
         departments={departments}
         users={users}
         editingProject={editingProject}
+         isSubmitting={isSubmitting}
       />
 
     </div>

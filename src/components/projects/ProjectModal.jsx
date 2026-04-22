@@ -1,3 +1,4 @@
+import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 export default function ProjectModal({
@@ -9,9 +10,8 @@ export default function ProjectModal({
   departments,
   users,
   editingProject,
+  isSubmitting,
 }) {
-  if (!open) return null;
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -21,141 +21,164 @@ export default function ProjectModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg bg-white rounded-xl shadow-xl p-6">
+    <Dialog.Root open={open} onOpenChange={onClose}>
+      <Dialog.Portal>
+        {/* OVERLAY */}
+        <Dialog.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" />
 
-        {/* CLOSE */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-        >
-          <X size={18} />
-        </button>
+        {/* MODAL */}
+        <Dialog.Content className="fixed z-50 text-slate-900 top-1/2 left-1/2 w-[95%] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-8 shadow-2xl">
 
-        {/* TITLE */}
-        <h2 className="text-lg font-semibold text-gray-900">
-          {editingProject ? "Edit Project" : "Create Project"}
-        </h2>
+          {/* CLOSE */}
+          <Dialog.Close asChild>
+            <button className="absolute right-5 top-5 text-gray-400 hover:text-gray-600">
+              <X size={18} />
+            </button>
+          </Dialog.Close>
 
-        <p className="text-sm text-gray-500 mt-1 mb-4">
-          Define project details including owner and timeline.
-        </p>
+          {/* HEADER */}
+          <Dialog.Title className="text-xl font-semibold text-gray-900">
+            {editingProject ? "Edit Project" : "Create Project"}
+          </Dialog.Title>
 
-        {/* FORM */}
-        <div className="space-y-4">
+          <Dialog.Description className="text-sm text-gray-500 mt-1 mb-6">
+            Define a new enterprise initiative with its owner, scope and timeline.
+          </Dialog.Description>
 
-          {/* NAME */}
-          <div>
-            <label className="text-xs text-gray-500 font-medium">
-              PROJECT NAME
-            </label>
-            <input
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              type="text"
-              className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-            />
-          </div>
+          {/* FORM */}
+          <div className="space-y-5">
 
-          {/* ROW */}
-          <div className="grid grid-cols-2 gap-4">
-
-            {/* DEPARTMENT */}
+            {/* PROJECT NAME */}
             <div>
-              <label className="text-xs text-gray-500 font-medium">
-                DEPARTMENT
+              <label className="text-[11px] font-semibold text-gray-400 tracking-wide uppercase">
+                Project Name
               </label>
-              <select
-                name="department_id"
-                value={formData.department_id}
+              <input
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
-                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="">Select Dept</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="e.g. Project Quantum Leap"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
 
-            {/* OWNER */}
-            <div>
-              <label className="text-xs text-gray-500 font-medium">
-                OWNER
-              </label>
-              <select
-                name="owner_id"
-                value={formData.owner_id}
-                onChange={handleChange}
-                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="">Assign Owner</option>
-                {Array.isArray(users) &&
-                  users.map((u) => (
+            {/* DEPARTMENT + OWNER */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[11px] font-semibold text-gray-400 uppercase">
+                  Department
+                </label>
+                <select
+                  name="department_id"
+                  value={formData.department_id}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none"
+                >
+                  <option value="">Select Dept</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-gray-400 uppercase">
+                  Owner
+                </label>
+                <select
+                  name="owner_id"
+                  value={formData.owner_id}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none"
+                >
+                  <option value="">Assign Owner</option>
+                  {users.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name || u.email}
                     </option>
                   ))}
-              </select>
+                </select>
+              </div>
+            </div>
+
+            {/* DATES */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[11px] font-semibold text-gray-400 uppercase">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  name="start_date"
+                  value={formData.start_date}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-gray-400 uppercase">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  name="end_date"
+                  value={formData.end_date}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm"
+                />
+              </div>
+            </div>
+
+            {/* DESCRIPTION */}
+            <div>
+              <label className="text-[11px] font-semibold text-gray-400 uppercase">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Brief summary..."
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm"
+              />
             </div>
           </div>
 
-          {/* DATES */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col ">
-              <label className="text-xs text-gray-500 font-medium mb-2">
-                START DATE
-              </label>
-            <input
-              type="date"
-              name="start_date"
-              value={formData.start_date}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
-            />
-            </div>
-                  <div className="flex flex-col">
-              <label className="text-xs text-gray-500 font-medium mb-2">
-                END DATE
-              </label>
-            <input
-              type="date"
-              name="end_date"
-              value={formData.end_date}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
-            />
-            </div>
+          {/* FOOTER */}
+          <div className="flex justify-end items-center gap-3 mt-8 pt-5 border-t border-gray-100">
+            <Dialog.Close asChild>
+              <button className="text-sm text-gray-500 hover:text-gray-700">
+                Cancel
+              </button>
+            </Dialog.Close>
+
+            <button
+              onClick={onSubmit}
+              disabled={isSubmitting}
+              className={`text-sm px-5 py-2 rounded-sm font-medium shadow-sm transition
+                ${
+                  isSubmitting
+                    ? "bg-gray-300 cursor-not-allowed text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }
+              `}
+            >
+              {isSubmitting
+                ? editingProject
+                  ? "Updating..."
+                  : "Creating..."
+                : editingProject
+                ? "Update Project"
+                : "Create Project"}
+            </button>
 
           </div>
-
-          {/* DESCRIPTION */}
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={3}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-          />
-        </div>
-
-        {/* FOOTER */}
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="text-sm text-gray-500">
-            Cancel
-          </button>
-
-          <button
-            onClick={onSubmit}
-            className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md"
-          >
-            {editingProject ? "Update" : "Create"}
-          </button>
-        </div>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

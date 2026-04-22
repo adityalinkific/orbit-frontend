@@ -47,3 +47,9 @@ export const uploadProjectDocument = async (projectId, file) => {
 
   return res.data?.data;
 };
+
+
+export const deleteProjectService = async (projectId) => {
+  const res = await api.delete(`/projects/delete-project/${projectId}`);
+  return res.data;
+};

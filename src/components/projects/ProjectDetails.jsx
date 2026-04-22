@@ -1,10 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Share2, Plus, Filter, MoreHorizontal, X, Zap, Upload } from "lucide-react";
-import { getProjectById, updateProjectService, uploadProjectDocument } from "../../services/project.service";
+import { Share2, Plus, Filter, MoreHorizontal, X, Zap, Upload, Trash2, Calendar } from "lucide-react";
+import { deleteProjectService, getProjectById, updateProjectService, uploadProjectDocument } from "../../services/project.service";
 import { getDepartments } from "../../services/department.service";
 import { getAllUsersService } from "../../services/user.service";
 import ProjectModal from "./ProjectModal";
+import { useNavigate } from "react-router-dom";
+import ConfirmDeleteModal from "../common/ConfirmDeleteModal";
+import { toast } from "react-hot-toast";
+import AddMemberModal from "./AddMemberModal";
 
 export default function ProjectDetails() {
   const { id } = useParams();
@@ -12,10 +16,17 @@ export default function ProjectDetails() {
   const [activeTab, setActiveTab] = useState("Ongoing");
   const [documents, setDocuments] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [openMemberModal, setOpenMemberModal] = useState(false);
+
 
   const [openModal, setOpenModal] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
+
+  const navigate = useNavigate();
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -64,17 +75,14 @@ const fetchProject = async () => {
       start_date: data.start_date,        
       end_date: data.end_date,   
 
-      // ✅ REAL DATA
       completion: data.progress || 0,
       blocked: data.overdue_tasks_count || 0,
       status: getProjectStatus(data),
       lead: data.project_lead || "Unassigned",
 
-      // ✅ DERIVED
-      category: `Dept ${data.department_id}`, // improve below
+      category: getDepartmentName(data.department_id),
       timeline: formatTimeline(data.created_at, data.updated_at),
 
-      // ⛔ until backend APIs exist
       spillover: 0,
       tasks: [],
       team: [],
@@ -94,10 +102,11 @@ const handleFileUpload = async (e) => {
     const uploaded = await uploadProjectDocument(project.id, file);
 
     setDocuments((prev) => [uploaded, ...prev]);
+    toast.success("File uploaded successfully")
 
   } catch (err) {
     console.error(err);
-    alert("Upload failed");
+    toast.error("Upload failed");
   } finally {
     setUploading(false);
   }
@@ -106,7 +115,7 @@ const handleFileUpload = async (e) => {
 const handleSubmit = async () => {
   try {
     if (!formData.name || !formData.department_id || !formData.owner_id) {
-      alert("Name, Department & Owner required");
+      toast.error("Name, Department & Owner required");
       return;
     }
 
@@ -128,17 +137,42 @@ const handleSubmit = async () => {
 
     await updateProjectService(project.id, payload);
 
-    alert("Project updated successfully");
+    toast.success("Project updated successfully");
 
     setOpenModal(false);
     fetchProject(); // refresh UI
   } catch (err) {
     console.error(err);
-    alert("Update failed");
+    toast.error("Update failed");
   }
 };
 
+const handleDeleteProject = async () => {
+  try {
+    setIsDeleting(true);
 
+    await deleteProjectService(project.id);
+
+    toast.success("Project deleted");
+
+
+    setDeleteOpen(false);
+
+    // redirect after delete
+    navigate("/projects"); 
+
+  } catch (err) {
+    console.error(err);
+    toast.error("Delete failed");
+  } finally {
+    setIsDeleting(false);
+  }
+};
+
+const getDepartmentName = (id) => {
+  const dept = departments.find((d) => d.id === id);
+  return dept?.name || "GENERAL";
+};
 
 const getProjectStatus = (p) => {
   if (p.is_completed) return "completed";
@@ -154,6 +188,37 @@ const formatTimeline = (start, end) => {
   const e = new Date(end).toLocaleDateString();
 
   return `${s} — ${e}`;
+};
+
+const getStatusConfig = (status) => {
+  const formatted = status.charAt(0).toUpperCase() + status.slice(1);
+
+  switch (status) {
+    case "completed":
+      return {
+        label: formatted,
+        text: "text-green-600",
+        bg: "bg-green-50",
+      };
+    case "delayed":
+      return {
+        label: formatted,
+        text: "text-red-500",
+        bg: "bg-red-50",
+      };
+    case "risk":
+      return {
+        label: "At Risk",
+        text: "text-orange-500",
+        bg: "bg-orange-50",
+      };
+    default:
+      return {
+        label: formatted,
+        text: "text-blue-600",
+        bg: "bg-blue-50",
+      };
+  }
 };
 
 
@@ -252,11 +317,11 @@ const formatTimeline = (start, end) => {
               </div>
 
                <div>Lead: <span className="text-gray-600">{project.lead}</span></div>
-               <div>🗓️ {project.timeline} <span className="ml-2 text-red-500 uppercase font-bold">Passed</span></div>
+               <div className="flex items-center gap-1"> <Calendar size={14}/> {project.timeline}</div>
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
             <button
               onClick={() => {
                 setFormData({
@@ -274,10 +339,17 @@ const formatTimeline = (start, end) => {
 
                 setOpenModal(true);
               }}
-              className="bg-[#1D4ED8] hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold"
+              className="flex gap-1 text-sm items-center px-4 py-1.5 font-medium rounded-sm bg-[#005fff] text-white cursor-pointer"
             >
-              Manage Project
+              Update Project
             </button>
+              <button
+                onClick={() => setDeleteOpen(true)}
+                className="text-red-500 cursor-pointer px-2 py-1.5 rounded-sm hover:bg-red-200"
+              >
+                <Trash2 />
+              </button>
+
 
           </div>
         </div>
@@ -289,7 +361,19 @@ const formatTimeline = (start, end) => {
               <StatCard title="COMPLETION %" value={`${project.completion}%`} />
               <StatCard title="BLOCKED TASKS" value={project.blocked} isAlert={project.blocked > 0} />
               <StatCard title="SPILLOVER TASKS" value={project.spillover} />
-              <StatCard title="TIMELINE STATUS" value={project.status} isAlert />
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                TIMELINE STATUS
+              </p>
+
+              <div
+                className={`inline-flex items-center px-3 py-1 text-xl font-semibold 
+                ${getStatusConfig(project.status).text}`}
+              >
+                {getStatusConfig(project.status).label}
+              </div>
+            </div>
+
            </div>
         </div>
 
@@ -323,9 +407,13 @@ const formatTimeline = (start, end) => {
         <div className="mb-10">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-[11px] font-bold text-slate-400 tracking-widest uppercase">Project Team</h3>
-            <button className="text-xs font-bold text-gray-700 border border-gray-300 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-gray-50">
+            <button
+              onClick={() => setOpenMemberModal(true)}
+              className="text-xs font-bold text-gray-700 border border-gray-300 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-gray-50"
+            >
               <Plus size={14} /> Add Member
             </button>
+
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
@@ -422,6 +510,22 @@ const formatTimeline = (start, end) => {
         users={users}
         editingProject={project}
       />
+      <ConfirmDeleteModal
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteProject}
+        title="Delete Project"
+        description={`Are you sure you want to delete "${project?.name}"? This action cannot be undone.`}
+        isDeleting={isDeleting}
+      />
+      <AddMemberModal
+        open={openMemberModal}
+        onClose={() => setOpenMemberModal(false)}
+        projectId={project.id}
+        onSuccess={fetchProject}
+      />
+
+
 
     </div>
   );
