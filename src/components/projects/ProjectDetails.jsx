@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Share2, Plus, Filter, MoreHorizontal, X, Zap, Upload, Trash2, Calendar } from "lucide-react";
+import { Share2, Plus, Filter, MoreHorizontal, X, Zap, Upload, Trash2, Calendar, Eye, Trash } from "lucide-react";
 import { deleteProjectService, getProjectById, updateProjectService, uploadProjectDocument } from "../../services/project.service";
 import { getDepartments } from "../../services/department.service";
 import { getAllUsersService } from "../../services/user.service";
@@ -17,6 +17,8 @@ export default function ProjectDetails() {
   const [documents, setDocuments] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [openMemberModal, setOpenMemberModal] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
+
 
 
   const [openModal, setOpenModal] = useState(false);
@@ -71,9 +73,9 @@ const fetchProject = async () => {
       name: data.name,
       description: data.description,
       department_id: data.department_id,
-      owner_id: data.owner_id,            
-      start_date: data.start_date,        
-      end_date: data.end_date,   
+      owner_id: data.owner_id,
+      start_date: data.start_date,
+      end_date: data.end_date,
 
       completion: data.progress || 0,
       blocked: data.overdue_tasks_count || 0,
@@ -87,10 +89,23 @@ const fetchProject = async () => {
       tasks: [],
       team: [],
     });
+
+    setDocuments(
+  (data.documents || []).map((doc) => ({
+    id: doc.id,
+    file_name: doc.file_name || "Untitled",
+    uploaded_by: doc.uploaded_by || "Unknown",
+    created_at: doc.created_at,
+    file_url: doc.file_url, 
+  }))
+);
+
+
   } catch (err) {
     console.error(err);
   }
 };
+
 
 const handleFileUpload = async (e) => {
   const file = e.target.files[0];
@@ -99,9 +114,13 @@ const handleFileUpload = async (e) => {
   try {
     setUploading(true);
 
-    const uploaded = await uploadProjectDocument(project.id, file);
+    const res = await uploadProjectDocument(project.id, file);
 
-    setDocuments((prev) => [uploaded, ...prev]);
+    const newDoc = res.data || res;
+
+    setDocuments((prev) => [newDoc, ...prev]);
+
+
     toast.success("File uploaded successfully")
 
   } catch (err) {
@@ -175,11 +194,15 @@ const getDepartmentName = (id) => {
 };
 
 const getProjectStatus = (p) => {
+  if (p.status === "archived") return "archived";
+
   if (p.is_completed) return "completed";
   if (p.project_health === "at_risk") return "risk";
   if (p.project_health === "delayed") return "delayed";
+
   return "active";
 };
+
 
 const formatTimeline = (start, end) => {
   if (!start || !end) return "N/A";
@@ -212,6 +235,12 @@ const getStatusConfig = (status) => {
         text: "text-orange-500",
         bg: "bg-orange-50",
       };
+      case "archived":
+      return {
+        label: "Archived",
+        text: "text-gray-500",
+        bg: "bg-gray-50",
+      };
     default:
       return {
         label: formatted,
@@ -220,6 +249,81 @@ const getStatusConfig = (status) => {
       };
   }
 };
+
+const handlePreview = (doc) => {
+  if (!doc.file_url) {
+    toast.error("No preview available");
+    return;
+  }
+
+  window.open(doc.file_url, "_blank");
+};
+
+const renderPreview = (doc) => {
+  if (!doc.file_url) {
+    return <p className="text-gray-400">No preview available</p>;
+  }
+
+  const ext = doc.file_name.split(".").pop()?.toLowerCase();
+  const url = doc.file_url;
+
+  // 🖼️ IMAGES
+  if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+    return (
+      <img
+        src={url}
+        alt={doc.file_name}
+        className="max-h-full max-w-full object-contain"
+      />
+    );
+  }
+
+  // 📄 PDF
+  if (ext === "pdf") {
+    return (
+      <iframe
+        src={url}
+        title="PDF Preview"
+        className="w-full h-full"
+      />
+    );
+  }
+
+  // 📝 DOC / DOCX / XLS / XLSX / PPT → GOOGLE VIEWER
+  if (["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext)) {
+    const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+      url
+    )}&embedded=true`;
+
+    return (
+      <iframe
+        src={viewerUrl}
+        title="Document Preview"
+        className="w-full h-full"
+      />
+    );
+  }
+
+  // ⚠️ FALLBACK
+  return (
+    <div className="text-center">
+      <p className="text-gray-500 mb-3">
+        Preview not supported for this file type
+      </p>
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="text-blue-600 underline text-sm"
+      >
+        Open / Download File
+      </a>
+    </div>
+  );
+};
+
+
+
 
 
 
@@ -286,16 +390,6 @@ const getStatusConfig = (status) => {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-              <span
-                className={`text-[10px] font-bold px-2 py-1 rounded uppercase
-                  ${project.status === "delayed" ? "bg-red-50 text-red-500" :
-                    project.status === "risk" ? "bg-orange-50 text-orange-500" :
-                    project.status === "completed" ? "bg-green-50 text-green-500" :
-                    "bg-blue-50 text-blue-500"}
-                `}
-              >
-                {project.status}
-              </span>
 
             </div>
             
@@ -310,6 +404,8 @@ const getStatusConfig = (status) => {
                       ? "bg-red-500"
                       : project.status === "risk"
                       ? "bg-orange-500"
+                      : project.status === "archived"
+                      ? "bg-gray-500"
                       : "bg-blue-500"
                   }`}
                 />
@@ -457,39 +553,71 @@ const getStatusConfig = (status) => {
 
           <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
             {/* HEADER */}
-            <div className="grid grid-cols-5 text-xs font-semibold text-gray-400 px-6 py-3 border-b">
+            <div className="grid grid-cols-6 text-xs font-semibold text-gray-400 px-6 py-3 border-b">
               <span className="col-span-2">NAME</span>
               <span>TYPE</span>
               <span>UPLOADED BY</span>
               <span>DATE</span>
+              <span className="text-right">ACTIONS</span>
             </div>
 
             {/* ROWS */}
             {documents.length === 0 ? (
-              <p className="p-6 text-sm text-gray-400">No documents uploaded</p>
+                <div className="p-10 text-center text-gray-400 text-sm">
+                  No documents uploaded yet
+                </div>
             ) : (
               documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="grid grid-cols-5 px-6 py-4 text-sm border-b last:border-0 items-center"
+                  className="grid grid-cols-6 px-6 py-4 text-sm border-b last:border-0 items-center hover:bg-gray-50 transition"
                 >
-                  <span className="col-span-2 font-medium text-gray-800">
-                    {doc.file_name}
-                  </span>
+                  {/* NAME */}
+                  <div className="col-span-2 flex items-center gap-2">
+                    <a
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-blue-600 hover:underline truncate"
+                    >
+                      {doc.file_name}
+                    </a>
+                  </div>
 
+                  {/* TYPE */}
                   <span className="text-xs bg-gray-100 px-2 py-1 rounded w-fit">
-                    {doc.file_name.split(".").pop().toUpperCase()}
+                    {doc.file_name.split(".").pop()?.toUpperCase()}
                   </span>
 
-                  <span className="text-gray-500">
+                  {/* USER */}
+                  <span className="text-gray-500 text-xs">
                     User #{doc.uploaded_by}
                   </span>
 
-                  <span className="text-gray-400">
+                  {/* DATE */}
+                  <span className="text-gray-400 text-xs">
                     {new Date(doc.created_at).toLocaleDateString()}
                   </span>
+
+                  {/* ACTIONS */}
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={() => setPreviewDoc(doc)}
+                      className="text-gray-400 hover:text-blue-500"
+                    >
+                      <Eye size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteDoc(doc.id)}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
                 </div>
               ))
+
             )}
           </div>
 
@@ -500,6 +628,32 @@ const getStatusConfig = (status) => {
 
 
       </div>
+
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-white w-[90%] max-w-4xl h-[80vh] rounded-xl shadow-lg flex flex-col overflow-hidden">
+            
+            {/* HEADER */}
+            <div className="flex justify-between items-center px-4 py-3 border-b">
+              <h3 className="text-sm font-semibold truncate">
+                {previewDoc.file_name}
+              </h3>
+              <button
+                onClick={() => setPreviewDoc(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* BODY */}
+            <div className="flex-1 flex items-center justify-center bg-gray-50">
+              {renderPreview(previewDoc)}
+            </div>
+          </div>
+        </div>
+      )}
+
       <ProjectModal
         open={openModal}
         onClose={() => setOpenModal(false)}

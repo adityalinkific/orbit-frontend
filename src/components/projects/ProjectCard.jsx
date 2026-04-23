@@ -99,10 +99,20 @@ export default function ProjectCard({ project, onToggleStatus }) {
       </div>
 
       {/* FOOTER */}
-      <div className="flex items-center justify-between mt-2">
-        <span className="text-sm font-semibold text-gray-400">
+      <div className="flex items-center  justify-between mt-2">
+        <div className="flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#4b8fe2] text-[10px] font-medium text-white">
+              {owner
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
+        <span className="text-sm font-medium text-gray-400">
           {owner}
-        </span>
+        </span>        </div>
+
         <span className="text-sm font-bold text-slate-900">
           {project.total_tasks || 24}{" "}
           <span className="text-gray-400 font-normal">TASKS</span>

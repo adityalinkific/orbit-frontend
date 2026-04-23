@@ -129,7 +129,9 @@ const handleChange = (e) => {
           
           progress: p.progress || 0,
           overdue: p.overdue_tasks_count || 0,
-          owner: p.project_lead || "Unassigned",
+          owner_id: p.owner_id,
+          owner: getUserName(p.owner_id),
+
 
           
           status: getProjectStatus(p),
@@ -178,10 +180,10 @@ const fetchUsers = async () => {
 
 const handleToggleStatus = async (projectId, newStatus) => {
   try {
-    // call API here
-    await updateProjectService(projectId, { status: newStatus });
+    await updateProjectService(projectId, {
+      status: newStatus,
+    });
 
-    // update UI
     setProjects((prev) =>
       prev.map((p) =>
         p.id === projectId ? { ...p, status: newStatus } : p
@@ -190,6 +192,11 @@ const handleToggleStatus = async (projectId, newStatus) => {
   } catch (err) {
     console.error(err);
   }
+};
+
+const getUserName = (id) => {
+  const user = users.find((u) => u.id === id);
+  return user ? user.name : "Unassigned";
 };
 
 
@@ -205,13 +212,15 @@ const handleToggleStatus = async (projectId, newStatus) => {
 };
 
 const getProjectStatus = (p) => {
-  if (p.is_completed) return "completed";
+  if (p.status === "archived") return "archived";
 
+  if (p.is_completed) return "completed";
   if (p.project_health === "at_risk") return "risk";
   if (p.project_health === "delayed") return "delayed";
 
   return "active";
 };
+
 
 const getDepartmentName = (id) => {
   const dept = departments.find((d) => d.id === id);
@@ -226,12 +235,18 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (departments.length) {
+  if (departments.length && users.length) {
     fetchProjects();
   }
-}, [departments]);
+}, [departments, users]);
 
 
+
+const filteredProjects = projects.filter((p) => {
+  if (tab === "active") return p.status !== "archived";
+  if (tab === "archived") return p.status === "archived";
+  return true;
+});
 
 
   return (
@@ -272,11 +287,6 @@ useEffect(() => {
           </button>
         </div>
 
-        <button className="flex gap-1 text-sm items-center bg-white px-4 py-1.5 font-medium rounded-sm border border-gray-300">
-          <Funnel size={16} />
-          Filter
-        </button>
-
         <button
           onClick={() => {
             setEditingProject(null);
@@ -303,7 +313,7 @@ useEffect(() => {
     <p>Loading...</p>
   ) : (
     <>
-      {projects.map((project) => (
+      {filteredProjects.map((project) => (
         <ProjectCard key={project.id} project={project}  onToggleStatus={handleToggleStatus}/>
       ))}
 
@@ -324,14 +334,6 @@ useEffect(() => {
 <div className=" px-6 mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
   {metrics ? (
     <>
-      {/* Total Budget */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Budget</p>
-        <h2 className="text-2xl font-bold text-slate-900 mt-1">$1.24M</h2>
-        <p className="text-xs text-green-600 font-medium mt-1 flex items-center">
-          <span className="mr-1">↑</span> 12% vs last quarter
-        </p>
-      </div>
 
       {/* Active Projects */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
