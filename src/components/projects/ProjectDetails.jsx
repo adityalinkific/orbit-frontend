@@ -25,7 +25,7 @@ export default function ProjectDetails() {
 
   const handleDownloadAction = async (doc) => {
     try {
-      const res = await api.get(`/projects/${project.id}/document/${doc.id}/view`, { responseType: 'blob' });
+      const res = await api.get(`/projects/${project.id}/documents/${doc.id}/view`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -169,7 +169,7 @@ const fetchProject = async () => {
         file_name: doc.file_name || "Untitled",
         uploaded_by: getUserName(doc.uploaded_by) || "Unknown",
         created_at: doc.created_at,
-        file_url: `${import.meta.env.VITE_API_URL}/api/v1/projects/${data.id}/document/${doc.id}/view`,
+        file_url: `${import.meta.env.VITE_API_URL}/api/v1/projects/${data.id}/documents/${doc.id}/view`,
       }))
     );
   } catch (err) {
@@ -193,16 +193,15 @@ const handleFileUpload = async (e) => {
   try {
     setUploading(true);
 
-    const res = await uploadProjectDocument(project.id, file);
+    const newDoc = await uploadProjectDocument(project.id, file);
 
-    const newDoc = res.data || res;
 
     setDocuments((prev) => [{
       id: newDoc.id,
       file_name: newDoc.file_name || file.name,
       uploaded_by: getUserName(newDoc.uploaded_by) || "Unknown",
       created_at: newDoc.created_at || new Date().toISOString(),
-      file_url: `${import.meta.env.VITE_API_URL}/api/v1/projects/${project.id}/document/${newDoc.id}/view`,
+      file_url: `${import.meta.env.VITE_API_URL}/api/v1/projects/${project.id}/documents/${newDoc.id}/view`,
     }, ...prev]);
 
 
@@ -356,7 +355,7 @@ const renderPreview = (doc) => {
       <img
         src={previewBlobUrl}
         alt={doc.file_name}
-        className="max-h-full max-w-full object-contain"
+        className="max-w-full h-auto mx-auto block"
       />
     );
   }
@@ -376,7 +375,7 @@ const renderPreview = (doc) => {
   if ((ext === "docx" || ext === "doc") && doc.parsedDocxHtml) {
     return (
       <div 
-        className="w-full h-full bg-white text-black p-8 overflow-y-auto document-preview prose max-w-none text-left"
+        className="w-full bg-white text-black p-6 overflow-auto"
         dangerouslySetInnerHTML={{ __html: doc.parsedDocxHtml }}
       />
     );
@@ -386,8 +385,7 @@ const renderPreview = (doc) => {
   if (["xlsx", "xls", "csv"].includes(ext) && doc.parsedXlsxHtml) {
     return (
       <div 
-        className="w-full h-full bg-white text-black p-8 overflow-auto excel-preview prose max-w-none text-left [&_table]:border-collapse [&_table]:w-full [&_td]:border [&_td]:border-gray-300 [&_td]:p-2"
-        dangerouslySetInnerHTML={{ __html: doc.parsedXlsxHtml }}
+        className="w-full bg-white text-black p-6 overflow-auto"
       />
     );
   }
@@ -742,7 +740,7 @@ const handleDeleteDoc = async (docId) => {
                         setIsPreviewLoading(true);
                         setPreviewBlobUrl(null);
                         try {
-                          const res = await api.get(`/projects/${project.id}/document/${doc.id}/view`, { responseType: 'blob' });
+                          const res = await api.get(`/projects/${project.id}/documents/${doc.id}/view`, { responseType: 'blob' });
                           const blob = new Blob([res.data], { type: res.headers['content-type'] || res.data.type });
                           const url = URL.createObjectURL(blob);
                           
@@ -804,27 +802,26 @@ const handleDeleteDoc = async (docId) => {
 
       {previewDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white w-[90%] max-w-4xl h-[80vh] rounded-xl shadow-lg flex flex-col overflow-hidden">
+          <div className="bg-white w-[90%] max-w-5xl h-[85vh] rounded-xl shadow-lg flex flex-col overflow-hidden">
             
             {/* HEADER */}
-            <div className="flex justify-between items-center px-4 py-3 border-b">
+            <div className="flex justify-between items-center px-4 py-3 border-b shrink-0">
               <h3 className="text-sm font-semibold truncate">
                 {previewDoc.file_name}
               </h3>
-              <button
-                onClick={() => setPreviewDoc(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={() => setPreviewDoc(null)}>
                 <X size={18} />
               </button>
             </div>
 
             {/* BODY */}
-            <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="flex-1 overflow-auto p-4 bg-gray-50">
               {renderPreview(previewDoc)}
             </div>
+
           </div>
         </div>
+
       )}
 
       <ProjectModal
