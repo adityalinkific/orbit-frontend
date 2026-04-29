@@ -164,14 +164,19 @@ const fetchProject = async () => {
     });
 
     setDocuments(
-      projectDocs.map((doc) => ({
-        id: doc.id,
-        file_name: doc.file_name || "Untitled",
-        uploaded_by: getUserName(doc.uploaded_by) || "Unknown",
-        created_at: doc.created_at,
-        file_url: `${import.meta.env.VITE_API_URL}/api/v1/projects/${data.id}/documents/${doc.id}/view`,
-      }))
+      projectDocs.map((doc) => {
+        const docId = doc.id || doc.document_id || doc._id;
+
+        return {
+          id: docId,
+          file_name: doc.file_name || "Untitled",
+          uploaded_by: getUserName(doc.uploaded_by) || "Unknown",
+          created_at: doc.created_at,
+          file_url: `${import.meta.env.VITE_API_URL}/api/v1/projects/${data.id}/documents/${docId}/view`,
+        };
+      })
     );
+
   } catch (err) {
     console.error(err);
   }
